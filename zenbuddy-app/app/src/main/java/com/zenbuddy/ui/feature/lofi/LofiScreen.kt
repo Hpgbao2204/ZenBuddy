@@ -1,6 +1,5 @@
 package com.zenbuddy.ui.feature.lofi
 
-import android.media.MediaPlayer
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -46,14 +45,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
 data class LofiTrack(
@@ -73,7 +68,7 @@ data class LofiTrack(
     val url: String
 )
 
-private val lofiTracks = listOf(
+val lofiTracks = listOf(
     LofiTrack("Rainy Day Vibes", "Lofi Girl", "🌧️", "https://stream.zeno.fm/0r0xa792kwzuv"),
     LofiTrack("Chill Beats", "ChillHop", "🎵", "https://stream.zeno.fm/fyn8eh3h5f8uv"),
     LofiTrack("Study Session", "Lofi Radio", "📚", "https://stream.zeno.fm/f3wvbbqmdg8uv"),
@@ -88,66 +83,10 @@ fun LofiScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    var currentTrackIndex by remember { mutableIntStateOf(-1) }
-    var isPlaying by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var volume by remember { mutableFloatStateOf(0.7f) }
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
-
-    fun stopPlayback() {
-        mediaPlayer?.let {
-            if (it.isPlaying) it.stop()
-            it.reset()
-            it.release()
-        }
-        mediaPlayer = null
-        isPlaying = false
-        isLoading = false
-    }
-
-    fun playTrack(index: Int) {
-        stopPlayback()
-        if (index == currentTrackIndex && !isPlaying) {
-            currentTrackIndex = -1
-            return
-        }
-        currentTrackIndex = index
-        isLoading = true
-
-        val player = MediaPlayer().apply {
-            setOnPreparedListener {
-                it.setVolume(volume, volume)
-                it.start()
-                isPlaying = true
-                isLoading = false
-            }
-            setOnErrorListener { _, _, _ ->
-                isLoading = false
-                isPlaying = false
-                true
-            }
-            setOnCompletionListener {
-                isPlaying = false
-            }
-        }
-        try {
-            player.setDataSource(lofiTracks[index].url)
-            player.prepareAsync()
-            mediaPlayer = player
-        } catch (_: Exception) {
-            isLoading = false
-            player.release()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { stopPlayback() }
-    }
-
-    // Update volume when slider changes
-    LaunchedEffect(volume) {
-        mediaPlayer?.setVolume(volume, volume)
-    }
+    val currentTrackIndex by LofiPlaybackService.currentTrackIndex.collectAsStateWithLifecycle()
+    val isPlaying by LofiPlaybackService.isPlaying.collectAsStateWithLifecycle()
+    val isLoading by LofiPlaybackService.isLoading.collectAsStateWithLifecycle()
+    val volume by LofiPlaybackService.volume.collectAsStateWithLifecycle()
 
     // Animations
     val infiniteTransition = rememberInfiniteTransition(label = "lofiFloat")
@@ -267,7 +206,7 @@ fun LofiScreen(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 IconButton(
-                                    onClick = { stopPlayback() },
+                                    onClick = { LofiPlaybackService.stop(context) },
                                     modifier = Modifier
                                         .size(56.dp)
                                         .clip(CircleShape)
@@ -299,7 +238,7 @@ fun LofiScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Slider(
                                     value = volume,
-                                    onValueChange = { volume = it },
+                                    onValueChange = { LofiPlaybackService.setVolume(it) },
                                     modifier = Modifier.weight(1f),
                                     colors = SliderDefaults.colors(
                                         thumbColor = MaterialTheme.colorScheme.primary,
@@ -336,7 +275,7 @@ fun LofiScreen(
                             alpha = animatedItems[(index + 2).coerceAtMost(animatedItems.size - 1)].value
                             translationY = (1f - animatedItems[(index + 2).coerceAtMost(animatedItems.size - 1)].value) * 30f
                         }
-                        .clickable { playTrack(index) },
+                        .clickable { LofiPlaybackService.play(context, index) },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isCurrentTrack)

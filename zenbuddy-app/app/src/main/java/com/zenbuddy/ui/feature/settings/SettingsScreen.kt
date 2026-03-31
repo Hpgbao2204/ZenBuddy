@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -65,6 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zenbuddy.app.BuildConfig
+import com.zenbuddy.ui.theme.ThemeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -72,6 +74,7 @@ import kotlinx.coroutines.tasks.await
 
 private const val PREFS_NAME = "zenbuddy_prefs"
 private const val KEY_REMINDERS = "reminders_enabled"
+private const val KEY_DARK_MODE = "dark_mode"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -232,6 +235,17 @@ fun SettingsScreen(
                 onCheckedChange = { enabled ->
                     remindersEnabled = enabled
                     prefs.edit().putBoolean(KEY_REMINDERS, enabled).apply()
+                }
+            )
+
+            SettingsToggleItem(
+                icon = Icons.Default.DarkMode,
+                title = "Dark Mode",
+                subtitle = "Switch to dark theme",
+                checked = ThemeState.isDarkMode.value,
+                onCheckedChange = { enabled ->
+                    ThemeState.isDarkMode.value = enabled
+                    prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
                 }
             )
 
