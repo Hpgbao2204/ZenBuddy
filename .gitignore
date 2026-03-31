@@ -5,7 +5,9 @@
 # Bootstrap artifacts
 .android-sdk/
 .gradle-home/
+.jdk17/
 .env.local
+.codex/
 
 # OS
 .DS_Store
