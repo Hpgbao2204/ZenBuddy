@@ -1,6 +1,15 @@
 package com.zenbuddy.ui.feature.auth
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +51,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -85,6 +97,28 @@ fun AuthScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
+    // Animations
+    val logoScale = remember { Animatable(0f) }
+    val cardAlpha = remember { Animatable(0f) }
+    val cardSlide = remember { Animatable(50f) }
+    LaunchedEffect(Unit) {
+        logoScale.animateTo(1f, tween(600, easing = FastOutSlowInEasing))
+        cardAlpha.animateTo(1f, tween(400))
+        cardSlide.animateTo(0f, tween(400, easing = FastOutSlowInEasing))
+    }
+
+    // Floating lotus
+    val infiniteTransition = rememberInfiniteTransition(label = "authFloat")
+    val logoFloat by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoFloat"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -101,7 +135,10 @@ fun AuthScreen(
             // App Icon / Title
             Text(
                 text = "🧘",
-                fontSize = 64.sp
+                fontSize = 64.sp,
+                modifier = Modifier
+                    .scale(logoScale.value)
+                    .graphicsLayer { translationY = logoFloat }
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -119,7 +156,10 @@ fun AuthScreen(
 
             // Auth Card
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(cardAlpha.value)
+                    .graphicsLayer { translationY = cardSlide.value },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -262,6 +302,25 @@ fun AuthScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Email verification sent banner
+            AnimatedVisibility(visible = state.verificationSent) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "✉️ Verification email sent! Check your inbox to verify your account.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
 
             // Switch mode
             TextButton(onClick = { onEvent(AuthUiEvent.SwitchMode) }) {

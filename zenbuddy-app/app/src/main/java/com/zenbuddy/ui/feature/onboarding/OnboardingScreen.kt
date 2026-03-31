@@ -1,6 +1,11 @@
 package com.zenbuddy.ui.feature.onboarding
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
@@ -24,10 +29,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -94,13 +101,30 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(vertical = 24.dp)
         ) {
+            val dotTransition = rememberInfiniteTransition(label = "dotPulse")
+            val dotScale by dotTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.3f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(600),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "dotScale"
+            )
             repeat(pages.size) { index ->
+                val isCurrent = index == pagerState.currentPage
                 Box(
                     modifier = Modifier
-                        .size(if (index == pagerState.currentPage) 12.dp else 8.dp)
+                        .size(if (isCurrent) 12.dp else 8.dp)
+                        .graphicsLayer {
+                            if (isCurrent) {
+                                scaleX = dotScale
+                                scaleY = dotScale
+                            }
+                        }
                         .clip(CircleShape)
                         .background(
-                            if (index == pagerState.currentPage)
+                            if (isCurrent)
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.primaryContainer
@@ -138,6 +162,17 @@ fun OnboardingScreen(onFinished: () -> Unit) {
 
 @Composable
 private fun OnboardingPageContent(page: OnboardingPage) {
+    val infiniteTransition = rememberInfiniteTransition(label = "float")
+    val floatOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -20f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "emojiFloat"
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -150,7 +185,8 @@ private fun OnboardingPageContent(page: OnboardingPage) {
             Text(
                 text = page.emoji,
                 fontSize = 80.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.graphicsLayer { translationY = floatOffset }
             )
         }
 

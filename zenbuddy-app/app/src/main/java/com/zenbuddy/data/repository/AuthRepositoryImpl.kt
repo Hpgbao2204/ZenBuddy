@@ -2,6 +2,7 @@ package com.zenbuddy.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
 import com.zenbuddy.domain.model.User
 import com.zenbuddy.domain.repository.AuthRepository
 import kotlinx.coroutines.channels.awaitClose
@@ -13,7 +14,8 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val firestore: FirebaseFirestore
 ) : AuthRepository {
 
     override val currentUser: Flow<User?> = callbackFlow {
@@ -49,6 +51,21 @@ class AuthRepositoryImpl @Inject constructor(
             .setDisplayName(displayName)
             .build()
         firebaseUser.updateProfile(profileUpdates).await()
+
+        // Send email verification
+        firebaseUser.sendEmailVerification().await()
+
+        // Create user document in Firestore
+        val userDoc = mapOf(
+            "uid" to firebaseUser.uid,
+            "email" to email,
+            "displayName" to displayName,
+            "createdAt" to System.currentTimeMillis()
+        )
+        firestore.collection("users")
+            .document(firebaseUser.uid)
+            .set(userDoc)
+            .await()
 
         Result.success(firebaseUser.toDomain())
     } catch (e: Exception) {

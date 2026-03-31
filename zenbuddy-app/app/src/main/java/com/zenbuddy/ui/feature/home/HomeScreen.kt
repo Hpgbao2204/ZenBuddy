@@ -1,5 +1,15 @@
 package com.zenbuddy.ui.feature.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,13 +45,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeRoute(
@@ -115,9 +132,50 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                // Breathing pulse animation while loading
+                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                val scale by infiniteTransition.animateFloat(
+                    initialValue = 0.8f,
+                    targetValue = 1.2f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1000, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "pulseScale"
+                )
+                Text("🧘", fontSize = 64.sp, modifier = Modifier.scale(scale))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Finding your zen...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
+            // Staggered entrance animations
+            val animatedItems = remember { List(6) { Animatable(0f) } }
+            LaunchedEffect(Unit) {
+                animatedItems.forEachIndexed { index, anim ->
+                    delay(index * 80L)
+                    anim.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(400, easing = FastOutSlowInEasing)
+                    )
+                }
+            }
+
+            // Floating emoji bounce
+            val infiniteTransition = rememberInfiniteTransition(label = "float")
+            val floatOffset by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = -8f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2000, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "float"
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -132,6 +190,8 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .alpha(animatedItems[0].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[0].value) * 40).toInt()) }
                         .clickable { onNavigateToMood() },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -147,7 +207,11 @@ fun HomeScreen(
                             val emojis = listOf("😢", "😟", "😐", "🙂", "😊", "😄", "🤩")
                             val index = ((uiState.todayMood.score / 10f) * (emojis.size - 1)).toInt()
                                 .coerceIn(0, emojis.size - 1)
-                            Text(text = emojis[index], fontSize = 48.sp)
+                            Text(
+                                text = emojis[index],
+                                fontSize = 48.sp,
+                                modifier = Modifier.offset { IntOffset(0, floatOffset.toInt()) }
+                            )
                             Column {
                                 Text(
                                     text = "Today's Mood",
@@ -193,7 +257,10 @@ fun HomeScreen(
 
                 // AI Affirmation Card
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(animatedItems[1].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[1].value) * 40).toInt()) },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
@@ -251,7 +318,10 @@ fun HomeScreen(
 
                 // Quick Actions Row
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(animatedItems[2].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[2].value) * 40).toInt()) },
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Breathe Card
@@ -268,7 +338,11 @@ fun HomeScreen(
                             modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("🫧", fontSize = 32.sp)
+                            Text(
+                                "🫧",
+                                fontSize = 32.sp,
+                                modifier = Modifier.offset { IntOffset(0, floatOffset.toInt()) }
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Breathe",
@@ -322,6 +396,8 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .alpha(animatedItems[3].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[3].value) * 40).toInt()) }
                         .clickable { onNavigateToQuests() },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -361,6 +437,8 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .alpha(animatedItems[4].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[4].value) * 40).toInt()) }
                         .clickable { onNavigateToChat() },
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(

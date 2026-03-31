@@ -62,7 +62,7 @@ class AuthViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true, error = null) }
             authRepository.register(email, password, displayName)
                 .onSuccess { user ->
-                    _state.update { it.copy(isLoading = false, user = user) }
+                    _state.update { it.copy(isLoading = false, user = user, verificationSent = true) }
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Registration failed") }

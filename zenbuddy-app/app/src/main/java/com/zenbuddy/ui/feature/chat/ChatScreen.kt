@@ -1,5 +1,10 @@
 package com.zenbuddy.ui.feature.chat
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +34,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -166,22 +174,37 @@ fun ChatBubble(message: ChatMessage) {
         RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
     }
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = alignment
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                slideInHorizontally(
+                    initialOffsetX = { if (isUser) it / 3 else -it / 3 },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
     ) {
         Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .clip(shape)
-                .background(bgColor)
-                .padding(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = alignment
         ) {
-            Text(
-                text = message.text,
-                color = textColor,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .clip(shape)
+                    .background(bgColor)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = message.text,
+                    color = textColor,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

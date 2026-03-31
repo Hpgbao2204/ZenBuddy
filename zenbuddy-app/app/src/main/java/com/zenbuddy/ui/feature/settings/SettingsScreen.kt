@@ -54,6 +54,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,8 +66,13 @@ private const val KEY_REMINDERS = "reminders_enabled"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateBack: () -> Unit, onLogout: () -> Unit = {}) {
+fun SettingsScreen(
+    onNavigateBack: () -> Unit,
+    onLogout: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
+    val syncState by viewModel.state.collectAsStateWithLifecycle()
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     var remindersEnabled by remember { mutableStateOf(prefs.getBoolean(KEY_REMINDERS, false)) }
     var showClearDialog by remember { mutableStateOf(false) }
@@ -263,11 +270,11 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onLogout: () -> Unit = {}) {
                 )
                 SettingsItem(
                     icon = Icons.Default.CloudUpload,
-                    title = "Sync to Cloud",
-                    subtitle = "Upload data to Firebase",
+                    title = if (syncState.isSyncing) "Syncing..." else "Sync to Cloud",
+                    subtitle = syncState.syncMessage ?: "Upload data to Firebase",
                     onClick = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            Toast.makeText(context, "Syncing...", Toast.LENGTH_SHORT).show()
+                        if (!syncState.isSyncing) {
+                            viewModel.syncToCloud()
                         }
                     }
                 )

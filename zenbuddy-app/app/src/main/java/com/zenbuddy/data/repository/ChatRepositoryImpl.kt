@@ -26,8 +26,23 @@ class ChatRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ChatRepository {
 
+    companion object {
+        private fun friendlyAiError(e: Throwable): String {
+            val msg = e.message ?: "Unknown AI error"
+            return when {
+                msg.contains("quota", ignoreCase = true) || msg.contains("rate", ignoreCase = true) ->
+                    "AI is taking a break — free tier limit reached. Please try again later 🌙"
+                msg.contains("network", ignoreCase = true) || msg.contains("connect", ignoreCase = true) ->
+                    "No internet connection. Please check your network 📡"
+                msg.contains("api key", ignoreCase = true) || msg.contains("apikey", ignoreCase = true) ->
+                    "Invalid API key. Please check your Gemini key in settings 🔑"
+                else -> "AI is temporarily unavailable. Please try again later 💜"
+            }
+        }
+    }
+
     private val model = GenerativeModel(
-        modelName = "gemini-2.0-flash",
+        modelName = "gemini-2.5-flash",
         apiKey = BuildConfig.GEMINI_API_KEY,
         generationConfig = generationConfig {
             temperature = 0.7f
@@ -49,7 +64,7 @@ class ChatRepositoryImpl @Inject constructor(
             emit(Result.Success(responseBuilder.toString()))
         }
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "Gemini error")))
+        emit(Result.Error(AppError.AiError(friendlyAiError(e))))
     }.flowOn(ioDispatcher)
 
     override fun generateQuests(
@@ -69,7 +84,7 @@ class ChatRepositoryImpl @Inject constructor(
         val tasks = parseTasksJson(json)
         emit(Result.Success(tasks))
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "Quest generation failed")))
+        emit(Result.Error(AppError.AiError(friendlyAiError(e))))
     }.flowOn(ioDispatcher)
 
     override fun getMessages(sessionId: String): Flow<Result<List<ChatMessage>>> =
@@ -124,7 +139,7 @@ class ChatRepositoryImpl @Inject constructor(
             response.text?.trim() ?: "You are worthy of peace and joy 💜"
         }.fold(
             onSuccess = { Result.Success(it) },
-            onFailure = { Result.Error(AppError.AiError(it.message ?: "Affirmation failed")) }
+            onFailure = { Result.Error(AppError.AiError(friendlyAiError(it))) }
         )
 
     override suspend fun generateMoodInsight(moodScores: List<Int>, days: Int): Result<String> =
@@ -146,7 +161,7 @@ class ChatRepositoryImpl @Inject constructor(
             response.text?.trim() ?: "Keep tracking your mood — patterns will emerge soon! 🌱"
         }.fold(
             onSuccess = { Result.Success(it) },
-            onFailure = { Result.Error(AppError.AiError(it.message ?: "Insight failed")) }
+            onFailure = { Result.Error(AppError.AiError(friendlyAiError(it))) }
         )
 
     override suspend fun generateJournalReflection(journalText: String): Result<String> =
@@ -166,7 +181,7 @@ class ChatRepositoryImpl @Inject constructor(
             response.text?.trim() ?: "Thank you for sharing. What's the strongest emotion you feel right now? 💜"
         }.fold(
             onSuccess = { Result.Success(it) },
-            onFailure = { Result.Error(AppError.AiError(it.message ?: "Reflection failed")) }
+            onFailure = { Result.Error(AppError.AiError(friendlyAiError(it))) }
         )
 
     private fun parseTasksJson(raw: String): List<String> {

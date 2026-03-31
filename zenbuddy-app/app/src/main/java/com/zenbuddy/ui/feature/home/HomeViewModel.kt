@@ -87,7 +87,10 @@ class HomeViewModel @Inject constructor(
                     it.copy(affirmation = result.data, isLoadingAffirmation = false)
                 }
                 is Result.Error -> _uiState.update {
-                    it.copy(isLoadingAffirmation = false)
+                    it.copy(
+                        affirmation = result.error.message,
+                        isLoadingAffirmation = false
+                    )
                 }
                 is Result.Loading -> {}
             }
