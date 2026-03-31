@@ -1,0 +1,38 @@
+// TEMPLATE: UseCase
+// Usage: Replace {{Feature}}, {{feature}}, {{DomainModel}}, {{package}}.
+
+package {{package}}.domain.usecase.{{feature}}
+
+import kotlinx.coroutines.flow.Flow
+import {{package}}.core.result.Result
+import {{package}}.domain.model.{{DomainModel}}
+import {{package}}.domain.repository.{{Feature}}Repository
+import javax.inject.Inject
+
+// ── Single-responsibility UseCase ─────────────────────────────────────────────
+// One file = one action. Name verb + noun.
+
+class Get{{Feature}}sUseCase @Inject constructor(
+    private val repository: {{Feature}}Repository
+) {
+    operator fun invoke(): Flow<Result<List<{{DomainModel}}>>> =
+        repository.getAll()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+class Save{{Feature}}UseCase @Inject constructor(
+    private val repository: {{Feature}}Repository
+) {
+    suspend operator fun invoke(item: {{DomainModel}}): Result<Unit> =
+        repository.save(item)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+class Delete{{Feature}}UseCase @Inject constructor(
+    private val repository: {{Feature}}Repository
+) {
+    suspend operator fun invoke(id: String): Result<Unit> =
+        repository.delete(id)
+}

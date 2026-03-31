@@ -1,0 +1,52 @@
+// TEMPLATE: ViewModel
+// Usage: Replace {{Feature}}, {{feature}}, {{package}} with your values.
+// e.g. Feature=Mood, feature=mood, package=com.zenbuddy
+
+package {{package}}.ui.feature.{{feature}}
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import {{package}}.core.result.Result
+import {{package}}.domain.usecase.{{feature}}.*
+import javax.inject.Inject
+
+// ── State ────────────────────────────────────────────────────────────────────
+data class {{Feature}}UiState(
+    val isLoading: Boolean = false,
+    val error: String? = null
+    // Add feature-specific fields here
+)
+
+// ── Events ────────────────────────────────────────────────────────────────────
+sealed interface {{Feature}}UiEvent {
+    // Add user actions here, e.g.:
+    // data class Submit(val input: String) : {{Feature}}UiEvent
+}
+
+// ── Effects (one-shot) ────────────────────────────────────────────────────────
+sealed interface {{Feature}}Effect {
+    // Add navigation/snackbar events here, e.g.:
+    // data object NavigateBack : {{Feature}}Effect
+}
+
+// ── ViewModel ─────────────────────────────────────────────────────────────────
+@HiltViewModel
+class {{Feature}}ViewModel @Inject constructor(
+    // Inject UseCases here
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow({{Feature}}UiState())
+    val uiState: StateFlow<{{Feature}}UiState> = _uiState.asStateFlow()
+
+    private val _effects = MutableSharedFlow<{{Feature}}Effect>()
+    val effects: SharedFlow<{{Feature}}Effect> = _effects.asSharedFlow()
+
+    fun onEvent(event: {{Feature}}UiEvent) {
+        when (event) {
+            // Handle events here
+        }
+    }
+}

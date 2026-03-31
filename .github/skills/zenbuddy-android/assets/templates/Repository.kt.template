@@ -1,0 +1,75 @@
+// TEMPLATE: Repository Interface + Implementation
+// Usage: Replace {{Feature}}, {{feature}}, {{DomainModel}}, {{Entity}}, {{package}}.
+
+// ── Interface (domain layer — no Android deps) ────────────────────────────────
+package {{package}}.domain.repository
+
+import kotlinx.coroutines.flow.Flow
+import {{package}}.core.result.Result
+import {{package}}.domain.model.{{DomainModel}}
+
+interface {{Feature}}Repository {
+    fun getAll(): Flow<Result<List<{{DomainModel}}>>>
+    suspend fun getById(id: String): Result<{{DomainModel}}?>
+    suspend fun save(item: {{DomainModel}}): Result<Unit>
+    suspend fun delete(id: String): Result<Unit>
+}
+
+// ── Implementation (data layer) ───────────────────────────────────────────────
+package {{package}}.data.repository
+
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
+import {{package}}.core.error.AppError
+import {{package}}.core.result.Result
+import {{package}}.data.local.dao.{{Entity}}Dao
+import {{package}}.data.local.entity.toDomain
+import {{package}}.data.local.entity.toEntity
+import {{package}}.di.IoDispatcher
+import {{package}}.domain.model.{{DomainModel}}
+import {{package}}.domain.repository.{{Feature}}Repository
+import javax.inject.Inject
+
+class {{Feature}}RepositoryImpl @Inject constructor(
+    private val dao: {{Entity}}Dao,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : {{Feature}}Repository {
+
+    override fun getAll(): Flow<Result<List<{{DomainModel}}>>> =
+        dao.getAll()
+            .map<_, Result<List<{{DomainModel}}>>> { entities ->
+                Result.Success(entities.map { it.toDomain() })
+            }
+            .catch { e -> emit(Result.Error(AppError.DatabaseError(e.message ?: "DB error"))) }
+            .flowOn(ioDispatcher)
+
+    override suspend fun getById(id: String): Result<{{DomainModel}}?> =
+        withContext(ioDispatcher) {
+            runCatching { dao.getById(id)?.toDomain() }
+                .fold(
+                    onSuccess = { Result.Success(it) },
+                    onFailure = { Result.Error(AppError.DatabaseError(it.message ?: "Read failed")) }
+                )
+        }
+
+    override suspend fun save(item: {{DomainModel}}): Result<Unit> =
+        withContext(ioDispatcher) {
+            runCatching { dao.insert(item.toEntity()) }
+                .fold(
+                    onSuccess = { Result.Success(Unit) },
+                    onFailure = { Result.Error(AppError.DatabaseError(it.message ?: "Save failed")) }
+                )
+        }
+
+    override suspend fun delete(id: String): Result<Unit> =
+        withContext(ioDispatcher) {
+            runCatching {
+                val entity = dao.getById(id) ?: return@runCatching
+                dao.delete(entity)
+            }.fold(
+                onSuccess = { Result.Success(Unit) },
+                onFailure = { Result.Error(AppError.DatabaseError(it.message ?: "Delete failed")) }
+            )
+        }
+}

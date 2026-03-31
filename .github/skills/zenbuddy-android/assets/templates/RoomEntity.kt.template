@@ -1,0 +1,77 @@
+// TEMPLATE: Room Entity + DAO + Domain Model + Mapper
+// Usage: Replace {{Feature}}, {{feature}}, {{Entity}}, {{package}} with your values.
+
+// ── Room Entity ───────────────────────────────────────────────────────────────
+package {{package}}.data.local.entity
+
+import androidx.room.*
+import java.util.UUID
+
+@Entity(tableName = "{{feature}}s", indices = [Index("createdAt")])
+data class {{Entity}}Entity(
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    // Add fields here
+    val isSynced: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+// ── DAO ───────────────────────────────────────────────────────────────────────
+package {{package}}.data.local.dao
+
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
+import {{package}}.data.local.entity.{{Entity}}Entity
+
+@Dao
+interface {{Entity}}Dao {
+
+    @Query("SELECT * FROM {{feature}}s ORDER BY createdAt DESC")
+    fun getAll(): Flow<List<{{Entity}}Entity>>
+
+    @Query("SELECT * FROM {{feature}}s WHERE id = :id")
+    suspend fun getById(id: String): {{Entity}}Entity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: {{Entity}}Entity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<{{Entity}}Entity>)
+
+    @Update
+    suspend fun update(entity: {{Entity}}Entity)
+
+    @Delete
+    suspend fun delete(entity: {{Entity}}Entity)
+
+    @Query("SELECT * FROM {{feature}}s WHERE isSynced = 0")
+    suspend fun getUnsynced(): List<{{Entity}}Entity>
+
+    @Query("UPDATE {{feature}}s SET isSynced = 1 WHERE id IN (:ids)")
+    suspend fun markSynced(ids: List<String>)
+}
+
+// ── Domain Model ──────────────────────────────────────────────────────────────
+package {{package}}.domain.model
+
+data class {{Entity}}(
+    val id: String,
+    // Add domain fields here (no Android deps, no Room annotations)
+    val createdAt: Long
+)
+
+// ── Mappers (keep in data layer) ──────────────────────────────────────────────
+package {{package}}.data.local.entity
+
+import {{package}}.domain.model.{{Entity}}
+
+fun {{Entity}}Entity.toDomain() = {{Entity}}(
+    id = id,
+    // Map fields
+    createdAt = createdAt
+)
+
+fun {{Entity}}.toEntity() = {{Entity}}Entity(
+    id = id,
+    // Map fields
+    createdAt = createdAt
+)

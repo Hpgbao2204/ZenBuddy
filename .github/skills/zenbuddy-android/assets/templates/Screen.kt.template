@@ -1,0 +1,81 @@
+// TEMPLATE: Screen (Composable)
+// Usage: Replace {{Feature}}, {{feature}}, {{package}} with your values.
+
+package {{package}}.ui.feature.{{feature}}
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import {{package}}.ui.theme.ZenBuddyTheme
+
+// ── Route (stateful — connects ViewModel) ────────────────────────────────────
+@Composable
+fun {{Feature}}Route(
+    viewModel: {{Feature}}ViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                // Handle effects, e.g.:
+                // {{Feature}}Effect.NavigateBack -> onNavigateBack()
+                else -> Unit
+            }
+        }
+    }
+
+    {{Feature}}Screen(
+        uiState = uiState,
+        onEvent = viewModel::onEvent
+    )
+}
+
+// ── Screen (stateless — previewable) ─────────────────────────────────────────
+@Composable
+fun {{Feature}}Screen(
+    uiState: {{Feature}}UiState,
+    onEvent: ({{Feature}}UiEvent) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("{{Feature}}") })
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            }
+
+            uiState.error?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+            }
+
+            // Add feature-specific UI here
+        }
+    }
+}
+
+// ── Previews ──────────────────────────────────────────────────────────────────
+@Preview(showBackground = true)
+@Composable
+private fun {{Feature}}ScreenPreview() {
+    ZenBuddyTheme {
+        {{Feature}}Screen(
+            uiState = {{Feature}}UiState(),
+            onEvent = {}
+        )
+    }
+}

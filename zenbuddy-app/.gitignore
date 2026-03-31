@@ -1,0 +1,80 @@
+# ============================================================
+# ZenBuddy Android — .gitignore
+# ============================================================
+
+# ── Local environment & secrets ──────────────────────────────
+local.properties
+.env.local
+*.keystore
+*.jks
+google-services.json
+
+# ── Local Android SDK (bootstrap.sh isolates here) ───────────
+.android-sdk/
+
+# ── Local Gradle cache (isolated by bootstrap.sh) ────────────
+.gradle-home/
+
+# ── Gradle build outputs ─────────────────────────────────────
+.gradle/
+build/
+app/build/
+**/build/
+
+# ── Android Studio / IntelliJ IDE files ──────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/deploymentTargetDropDown.xml
+*.hprof
+
+# ── Room schema export (optional: commit if you want migrations tracked)
+# app/schemas/     ←  uncomment to IGNORE schema exports
+
+# ── OS artifacts ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Android profiler captures ─────────────────────────────────
+captures/
+*.trace
+
+# ── Test results ──────────────────────────────────────────────
+test-results/
+app/src/test/
+*.xml
+
+# ── Lint ──────────────────────────────────────────────────────
+lint/
+*.lint.xml
+
+# ── Navigation Safe Args generated sources ────────────────────
+app/src/main/java/**/*Args.kt
+app/src/main/java/**/*Directions.kt
+
+# ── ADB / emulator temp files ────────────────────────────────
+*.avd.lock
+*.pid
+
+# ── VS Code (keep tasks.json — it's useful for teammates) ─────
+.vscode/*
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ── Misc ──────────────────────────────────────────────────────
+*.swp
+*.tmp
+*.bak
+nohup.out
