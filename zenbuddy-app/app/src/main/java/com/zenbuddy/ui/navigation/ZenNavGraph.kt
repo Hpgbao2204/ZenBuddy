@@ -23,6 +23,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.zenbuddy.ui.feature.auth.AuthRoute
 import com.zenbuddy.ui.feature.breathing.BreathingScreen
 import com.zenbuddy.ui.feature.chat.ChatRoute
 import com.zenbuddy.ui.feature.home.HomeRoute
@@ -49,6 +50,7 @@ val bottomNavItems = listOf(
 
 // Routes that should NOT show the bottom nav bar
 private val noBottomBarRoutes = setOf(
+    Route.Auth.path,
     Route.Breathing.path,
     Route.Insights.path,
     Route.Settings.path,
@@ -102,6 +104,15 @@ fun ZenNavGraph(
             startDestination = startDestination,
             modifier = Modifier.padding(padding)
         ) {
+            composable(Route.Auth.path) {
+                AuthRoute(
+                    onAuthSuccess = {
+                        navController.navigate(Route.Onboarding.path) {
+                            popUpTo(Route.Auth.path) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Route.Onboarding.path) {
                 OnboardingScreen(
                     onFinished = {
@@ -141,7 +152,14 @@ fun ZenNavGraph(
                 InsightsRoute(onNavigateBack = { navController.popBackStack() })
             }
             composable(Route.Settings.path) {
-                SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onLogout = {
+                        navController.navigate(Route.Auth.path) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }

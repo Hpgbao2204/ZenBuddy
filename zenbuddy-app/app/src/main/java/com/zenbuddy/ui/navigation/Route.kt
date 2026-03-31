@@ -1,6 +1,7 @@
 package com.zenbuddy.ui.navigation
 
 sealed class Route(val path: String) {
+    data object Auth : Route("auth")
     data object Onboarding : Route("onboarding")
     data object Home : Route("home")
     data object Mood : Route("mood")

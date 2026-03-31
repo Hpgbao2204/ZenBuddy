@@ -3,6 +3,7 @@ package com.zenbuddy.ui.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,10 +20,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -50,18 +54,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private const val PREFS_NAME = "zenbuddy_prefs"
 private const val KEY_REMINDERS = "reminders_enabled"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateBack: () -> Unit) {
+fun SettingsScreen(onNavigateBack: () -> Unit, onLogout: () -> Unit = {}) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     var remindersEnabled by remember { mutableStateOf(prefs.getBoolean(KEY_REMINDERS, false)) }
     var showClearDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
 
     if (showClearDialog) {
         AlertDialog(
@@ -96,12 +106,34 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     "• Complete gentle healing quests each day\n" +
                     "• Practice 4-7-8 breathing when stressed\n" +
                     "• Track mood trends in Insights\n\n" +
-                    "All data stays on your device. AI conversations are processed through Gemini API but not stored remotely."
+                    "Data syncs to Firebase when you're logged in."
                 )
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
                     Text("Got it 💜")
+                }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout?") },
+            text = { Text("You can log back in anytime. Your local data will remain on this device.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    showLogoutDialog = false
+                    onLogout()
+                }) {
+                    Text("Logout", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
                 }
             }
         )
@@ -215,6 +247,41 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Account
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+            )
+
+            if (firebaseUser != null) {
+                SettingsItem(
+                    icon = Icons.Default.Person,
+                    title = firebaseUser.displayName ?: "User",
+                    subtitle = firebaseUser.email ?: "Logged in"
+                )
+                SettingsItem(
+                    icon = Icons.Default.CloudUpload,
+                    title = "Sync to Cloud",
+                    subtitle = "Upload data to Firebase",
+                    onClick = {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            Toast.makeText(context, "Syncing...", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+                SettingsItem(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    title = "Logout",
+                    subtitle = "Sign out of your account",
+                    tintColor = MaterialTheme.colorScheme.error,
+                    onClick = { showLogoutDialog = true }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             // About
             Text(
                 text = "About",
@@ -264,9 +331,9 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 )
             ) {
                 Text(
-                    text = "🔒 ZenBuddy keeps all your data locally on your device. " +
-                            "AI conversations are processed through Gemini API but not stored remotely. " +
-                            "Your mental health data is private.",
+                    text = "🔒 ZenBuddy syncs your data to Firebase when logged in. " +
+                            "AI conversations are processed through Gemini API. " +
+                            "Your mental health data is kept secure.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
 import com.zenbuddy.ui.navigation.Route
 import com.zenbuddy.ui.navigation.ZenNavGraph
 import com.zenbuddy.ui.theme.ZenBuddyTheme
@@ -24,13 +25,20 @@ class MainActivity : ComponentActivity() {
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val onboardingDone = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
+        val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
+
+        val startDestination = when {
+            !isLoggedIn -> Route.Auth.path
+            !onboardingDone -> Route.Onboarding.path
+            else -> Route.Home.path
+        }
 
         setContent {
             ZenBuddyTheme {
                 val navController = rememberNavController()
                 ZenNavGraph(
                     navController = navController,
-                    startDestination = if (onboardingDone) Route.Home.path else Route.Onboarding.path,
+                    startDestination = startDestination,
                     onOnboardingComplete = {
                         prefs.edit().putBoolean(KEY_ONBOARDING_DONE, true).apply()
                     }
