@@ -56,6 +56,16 @@ class MoodRepositoryImpl @Inject constructor(
             .flowOn(ioDispatcher)
     }
 
+    override fun getMoodsForPeriod(days: Int): Flow<Result<List<MoodEntry>>> {
+        val from = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L)
+        return moodDao.getMoodsFrom(from)
+            .map<_, Result<List<MoodEntry>>> { entities ->
+                Result.Success(entities.map { it.toDomain() })
+            }
+            .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
+            .flowOn(ioDispatcher)
+    }
+
     override suspend fun logMood(entry: MoodEntry): Result<Unit> =
         withContext(ioDispatcher) {
             runCatching { moodDao.insert(entry.toEntity()) }

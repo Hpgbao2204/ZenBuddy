@@ -10,4 +10,7 @@ interface ChatRepository {
     fun generateQuests(moodScore: Int, recentJournal: String): Flow<Result<List<String>>>
     fun getMessages(sessionId: String): Flow<Result<List<ChatMessage>>>
     suspend fun saveMessage(message: ChatMessage): Result<Unit>
+    suspend fun generateAffirmation(moodScore: Int, recentJournal: String): Result<String>
+    suspend fun generateMoodInsight(moodScores: List<Int>, days: Int): Result<String>
+    suspend fun generateJournalReflection(journalText: String): Result<String>
 }

@@ -5,12 +5,16 @@ import com.zenbuddy.domain.model.MoodEntry
 data class HomeUiState(
     val todayMood: MoodEntry? = null,
     val activeQuestCount: Int = 0,
+    val affirmation: String? = null,
+    val greeting: String = "",
     val isLoading: Boolean = true,
+    val isLoadingAffirmation: Boolean = false,
     val error: String? = null
 )
 
 sealed interface HomeUiEvent {
     data object Refresh : HomeUiEvent
+    data object LoadAffirmation : HomeUiEvent
 }
 
 sealed interface HomeEffect {

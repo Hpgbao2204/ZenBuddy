@@ -31,4 +31,7 @@ interface MoodDao {
 
     @Query("UPDATE moods SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markSynced(ids: List<String>)
+
+    @Query("SELECT * FROM moods WHERE createdAt >= :fromTimestamp ORDER BY createdAt ASC")
+    fun getMoodsFrom(fromTimestamp: Long): Flow<List<MoodEntity>>
 }

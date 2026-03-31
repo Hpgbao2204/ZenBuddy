@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zenbuddy.core.result.Result
 import com.zenbuddy.domain.usecase.journal.GetJournalsUseCase
+import com.zenbuddy.domain.usecase.journal.GetJournalReflectionUseCase
 import com.zenbuddy.domain.usecase.journal.SaveJournalUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class JournalViewModel @Inject constructor(
     private val getJournalsUseCase: GetJournalsUseCase,
-    private val saveJournalUseCase: SaveJournalUseCase
+    private val saveJournalUseCase: SaveJournalUseCase,
+    private val getJournalReflectionUseCase: GetJournalReflectionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JournalUiState())
@@ -36,6 +38,7 @@ class JournalViewModel @Inject constructor(
             is JournalUiEvent.InputChanged -> _uiState.update { it.copy(inputText = event.text) }
             JournalUiEvent.SaveEntry -> saveEntry()
             JournalUiEvent.ToggleRecording -> toggleRecording()
+            JournalUiEvent.DismissReflection -> _uiState.update { it.copy(aiReflection = null) }
         }
     }
 
@@ -66,6 +69,7 @@ class JournalViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.update { it.copy(isSaving = false, inputText = "") }
                     _effects.send(JournalEffect.ShowSnackbar("Entry saved!"))
+                    loadReflection(text)
                 }
                 is Result.Error -> {
                     _uiState.update { it.copy(isSaving = false, error = result.error.message) }
@@ -77,5 +81,20 @@ class JournalViewModel @Inject constructor(
 
     private fun toggleRecording() {
         _uiState.update { it.copy(isRecording = !it.isRecording) }
+    }
+
+    private fun loadReflection(journalText: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingReflection = true) }
+            when (val result = getJournalReflectionUseCase(journalText)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(aiReflection = result.data, isLoadingReflection = false)
+                }
+                is Result.Error -> _uiState.update {
+                    it.copy(isLoadingReflection = false)
+                }
+                is Result.Loading -> {}
+            }
+        }
     }
 }

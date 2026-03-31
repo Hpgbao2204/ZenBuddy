@@ -8,5 +8,6 @@ interface MoodRepository {
     fun getMoods(): Flow<Result<List<MoodEntry>>>
     fun getTodayMood(): Flow<Result<MoodEntry?>>
     fun getRecentMoodScores(days: Int = 7): Flow<Result<List<Int>>>
+    fun getMoodsForPeriod(days: Int): Flow<Result<List<MoodEntry>>>
     suspend fun logMood(entry: MoodEntry): Result<Unit>
 }

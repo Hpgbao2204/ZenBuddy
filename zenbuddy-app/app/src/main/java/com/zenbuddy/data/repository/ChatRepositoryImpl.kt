@@ -91,18 +91,83 @@ class ChatRepositoryImpl @Inject constructor(
         [SYSTEM_ROLE]
         You are ZenBuddy, an empathetic non-prescriptive mental health companion.
         Never diagnose or prescribe. Suggest only gentle micro-actions.
+        Keep responses warm, concise, and use occasional emoji 💜
 
         [SAFETY]
-        If the user mentions self-harm or suicide, direct them to a crisis line immediately.
+        If the user mentions self-harm, suicide, or hurting themselves:
+        - Express care immediately
+        - Provide crisis hotline: 988 (US), 1800-599-0019 (VN), or local emergency
+        - Do NOT continue casual conversation
 
         [USER_CONTEXT]
-        Recent mood scores: ${context.moodHistory.joinToString(", ")}
+        Recent mood scores (last 7 days): ${context.moodHistory.joinToString(", ")}
         Recent journals: ${context.journalSummary}
 
         [GOAL]
-        Validate and respond to: "$userMessage"
-        Suggest 1 gentle micro-task. End with a warm check-in question.
+        Respond to: "$userMessage"
+        Be empathetic first. Then suggest 1 gentle micro-task. End with a warm check-in question.
     """.trimIndent()
+
+    override suspend fun generateAffirmation(moodScore: Int, recentJournal: String): Result<String> =
+        runCatching {
+            val prompt = """
+                You are ZenBuddy, a warm mental health companion 🌸
+                The user's mood is $moodScore/10 today.
+                Recent journal context: "${recentJournal.take(200)}"
+                
+                Generate ONE short, personalized affirmation (max 2 sentences).
+                Make it warm, encouraging, and relevant to their current mood.
+                Use a gentle emoji at the end.
+                Do NOT include any prefix like "Affirmation:" — just the affirmation itself.
+            """.trimIndent()
+            val response = model.generateContent(prompt)
+            response.text?.trim() ?: "You are worthy of peace and joy 💜"
+        }.fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Error(AppError.AiError(it.message ?: "Affirmation failed")) }
+        )
+
+    override suspend fun generateMoodInsight(moodScores: List<Int>, days: Int): Result<String> =
+        runCatching {
+            val prompt = """
+                You are ZenBuddy, a caring mental health companion 🧠💜
+                Analyze these mood scores from the last $days days: ${moodScores.joinToString(", ")}
+                (Scale: 0=very sad, 10=very happy)
+                
+                Provide a SHORT, warm insight (3-4 sentences max):
+                1. Identify any pattern or trend
+                2. Acknowledge their feelings
+                3. Offer one gentle suggestion
+                
+                Keep the tone supportive, not clinical. Use emoji sparingly.
+                If there's not enough data, encourage them to keep tracking.
+            """.trimIndent()
+            val response = model.generateContent(prompt)
+            response.text?.trim() ?: "Keep tracking your mood — patterns will emerge soon! 🌱"
+        }.fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Error(AppError.AiError(it.message ?: "Insight failed")) }
+        )
+
+    override suspend fun generateJournalReflection(journalText: String): Result<String> =
+        runCatching {
+            val prompt = """
+                You are ZenBuddy, an empathetic journal companion 📖💜
+                The user just wrote this journal entry:
+                "${journalText.take(500)}"
+                
+                Provide a thoughtful, short reflection (2-3 sentences):
+                1. Acknowledge what they shared
+                2. Ask ONE deeper follow-up question to help them explore their feelings
+                
+                Be warm and non-judgmental. Don't repeat their words back.
+            """.trimIndent()
+            val response = model.generateContent(prompt)
+            response.text?.trim() ?: "Thank you for sharing. What's the strongest emotion you feel right now? 💜"
+        }.fold(
+            onSuccess = { Result.Success(it) },
+            onFailure = { Result.Error(AppError.AiError(it.message ?: "Reflection failed")) }
+        )
 
     private fun parseTasksJson(raw: String): List<String> {
         val cleaned = raw.substringAfter("[").substringBefore("]")
