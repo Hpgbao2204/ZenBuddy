@@ -67,7 +67,9 @@ fun HomeRoute(
     onNavigateToQuests: () -> Unit,
     onNavigateToBreathing: () -> Unit,
     onNavigateToInsights: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToLofi: () -> Unit,
+    onNavigateToGames: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -79,7 +81,9 @@ fun HomeRoute(
         onNavigateToQuests = onNavigateToQuests,
         onNavigateToBreathing = onNavigateToBreathing,
         onNavigateToInsights = onNavigateToInsights,
-        onNavigateToSettings = onNavigateToSettings
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToLofi = onNavigateToLofi,
+        onNavigateToGames = onNavigateToGames
     )
 }
 
@@ -93,7 +97,9 @@ fun HomeScreen(
     onNavigateToQuests: () -> Unit,
     onNavigateToBreathing: () -> Unit,
     onNavigateToInsights: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToLofi: () -> Unit,
+    onNavigateToGames: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -153,7 +159,7 @@ fun HomeScreen(
             }
         } else {
             // Staggered entrance animations
-            val animatedItems = remember { List(6) { Animatable(0f) } }
+            val animatedItems = remember { List(8) { Animatable(0f) } }
             LaunchedEffect(Unit) {
                 animatedItems.forEachIndexed { index, anim ->
                     delay(index * 80L)
@@ -468,6 +474,81 @@ fun HomeScreen(
                             )
                         }
                         Text(text = "→", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                // Lofi & Games Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .alpha(animatedItems[5].value)
+                        .offset { IntOffset(0, ((1f - animatedItems[5].value) * 40).toInt()) },
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Lofi Card
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onNavigateToLofi() },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "🎧",
+                                fontSize = 32.sp,
+                                modifier = Modifier.offset { IntOffset(0, floatOffset.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Lofi Music",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = "Relax & chill",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+
+                    // Games Card
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onNavigateToGames() },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "🎮",
+                                fontSize = 32.sp,
+                                modifier = Modifier.offset { IntOffset(0, floatOffset.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Mini Games",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = "De-stress",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
 

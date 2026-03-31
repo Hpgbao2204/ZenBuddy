@@ -17,7 +17,7 @@ class SpeechToTextHelper(
 
     fun startListening() {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            onError("Speech recognition not available on this device")
+            onError("Speech recognition requires Google app. Please install or update Google app from Play Store.")
             return
         }
 
@@ -74,6 +74,7 @@ class SpeechToTextHelper(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault().toLanguageTag())
         }
         recognizer?.startListening(intent)
     }

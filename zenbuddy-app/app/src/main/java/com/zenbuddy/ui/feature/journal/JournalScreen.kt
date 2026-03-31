@@ -1,8 +1,5 @@
 package com.zenbuddy.ui.feature.journal
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -23,8 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,16 +36,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.zenbuddy.core.speech.SpeechToTextHelper
 import com.zenbuddy.domain.model.JournalEntry
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,34 +65,6 @@ fun JournalScreen(
     uiState: JournalUiState,
     onEvent: (JournalUiEvent) -> Unit
 ) {
-    val context = LocalContext.current
-
-    val speechHelper = remember {
-        SpeechToTextHelper(
-            context = context,
-            onResult = { text -> onEvent(JournalUiEvent.SpeechResult(text)) },
-            onError = { msg -> onEvent(JournalUiEvent.SpeechError(msg)) },
-            onListeningStateChanged = { listening ->
-                if (!listening) onEvent(JournalUiEvent.ToggleRecording)
-            }
-        )
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { speechHelper.destroy() }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            onEvent(JournalUiEvent.ToggleRecording)
-            speechHelper.startListening()
-        } else {
-            onEvent(JournalUiEvent.SpeechError("Microphone permission is required for voice input"))
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -202,73 +165,22 @@ fun JournalScreen(
                 }
             }
 
-            // Recording indicator
-            AnimatedVisibility(visible = uiState.isRecording) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Mic,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            "Listening... speak now 🎙️",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
-                }
-            }
-
             // Input area
-            Row(
+            OutlinedTextField(
+                value = uiState.inputText,
+                onValueChange = { onEvent(JournalUiEvent.InputChanged(it)) },
+                label = { Text("Write your thoughts… 🌿") },
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = uiState.inputText,
-                    onValueChange = { onEvent(JournalUiEvent.InputChanged(it)) },
-                    label = { Text("Write your thoughts… 🌿") },
-                    modifier = Modifier.weight(1f),
-                    minLines = 3,
-                    maxLines = 6,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
+                minLines = 3,
+                maxLines = 6,
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
                 )
-                IconButton(
-                    onClick = {
-                        if (uiState.isRecording) {
-                            speechHelper.stopListening()
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (uiState.isRecording) Icons.Default.MicOff else Icons.Default.Mic,
-                        contentDescription = if (uiState.isRecording) "Stop Recording" else "Record Voice",
-                        tint = if (uiState.isRecording) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 

@@ -10,6 +10,7 @@ import com.zenbuddy.data.local.entity.toDomain
 import com.zenbuddy.data.local.entity.toEntity
 import com.zenbuddy.domain.model.ChatContext
 import com.zenbuddy.domain.model.ChatMessage
+import com.zenbuddy.domain.repository.AuthRepository
 import com.zenbuddy.domain.repository.ChatRepository
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
@@ -23,6 +24,7 @@ import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
+    private val authRepository: AuthRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ChatRepository {
 
@@ -34,12 +36,17 @@ class ChatRepositoryImpl @Inject constructor(
                     "AI is taking a break — free tier limit reached. Please try again later 🌙"
                 msg.contains("network", ignoreCase = true) || msg.contains("connect", ignoreCase = true) ->
                     "No internet connection. Please check your network 📡"
-                msg.contains("api key", ignoreCase = true) || msg.contains("apikey", ignoreCase = true) ->
+                msg.contains("api key", ignoreCase = true) || msg.contains("apikey", ignoreCase = true) ||
+                msg.contains("API_KEY_INVALID", ignoreCase = true) ->
                     "Invalid API key. Please check your Gemini key in settings 🔑"
-                else -> "AI is temporarily unavailable. Please try again later 💜"
+                msg.contains("not found", ignoreCase = true) || msg.contains("404", ignoreCase = true) ->
+                    "AI model not available. Please try again later 🔄"
+                else -> "AI error: ${msg.take(100)} 💜"
             }
         }
     }
+
+    private fun uid(): String = authRepository.getCurrentUserId() ?: ""
 
     private val model = GenerativeModel(
         modelName = "gemini-2.5-flash",
@@ -47,7 +54,17 @@ class ChatRepositoryImpl @Inject constructor(
         generationConfig = generationConfig {
             temperature = 0.7f
             topP = 0.9f
-            maxOutputTokens = 512
+            maxOutputTokens = 1024
+        }
+    )
+
+    private val shortModel = GenerativeModel(
+        modelName = "gemini-2.5-flash",
+        apiKey = BuildConfig.GEMINI_API_KEY,
+        generationConfig = generationConfig {
+            temperature = 0.8f
+            topP = 0.9f
+            maxOutputTokens = 256
         }
     )
 
@@ -88,7 +105,7 @@ class ChatRepositoryImpl @Inject constructor(
     }.flowOn(ioDispatcher)
 
     override fun getMessages(sessionId: String): Flow<Result<List<ChatMessage>>> =
-        chatDao.getMessagesBySession(sessionId)
+        chatDao.getMessagesBySession(uid(), sessionId)
             .map<_, Result<List<ChatMessage>>> { entities ->
                 Result.Success(entities.map { it.toDomain() })
             }
@@ -96,7 +113,7 @@ class ChatRepositoryImpl @Inject constructor(
             .flowOn(ioDispatcher)
 
     override suspend fun saveMessage(message: ChatMessage): Result<Unit> =
-        runCatching { chatDao.insert(message.toEntity()) }
+        runCatching { chatDao.insert(message.toEntity(userId = uid())) }
             .fold(
                 onSuccess = { Result.Success(Unit) },
                 onFailure = { Result.Error(AppError.DatabaseError(it.message ?: "Save failed")) }
@@ -125,17 +142,8 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun generateAffirmation(moodScore: Int, recentJournal: String): Result<String> =
         runCatching {
-            val prompt = """
-                You are ZenBuddy, a warm mental health companion 🌸
-                The user's mood is $moodScore/10 today.
-                Recent journal context: "${recentJournal.take(200)}"
-                
-                Generate ONE short, personalized affirmation (max 2 sentences).
-                Make it warm, encouraging, and relevant to their current mood.
-                Use a gentle emoji at the end.
-                Do NOT include any prefix like "Affirmation:" — just the affirmation itself.
-            """.trimIndent()
-            val response = model.generateContent(prompt)
+            val prompt = "Generate one short positive affirmation (1-2 sentences) for someone with mood $moodScore/10. Be warm and encouraging. End with an emoji. No prefix."
+            val response = shortModel.generateContent(prompt)
             response.text?.trim() ?: "You are worthy of peace and joy 💜"
         }.fold(
             onSuccess = { Result.Success(it) },
@@ -166,18 +174,8 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun generateJournalReflection(journalText: String): Result<String> =
         runCatching {
-            val prompt = """
-                You are ZenBuddy, an empathetic journal companion 📖💜
-                The user just wrote this journal entry:
-                "${journalText.take(500)}"
-                
-                Provide a thoughtful, short reflection (2-3 sentences):
-                1. Acknowledge what they shared
-                2. Ask ONE deeper follow-up question to help them explore their feelings
-                
-                Be warm and non-judgmental. Don't repeat their words back.
-            """.trimIndent()
-            val response = model.generateContent(prompt)
+            val prompt = "Reflect briefly (2-3 sentences) on this journal entry: \"${journalText.take(300)}\". Acknowledge their feelings and ask one follow-up question. Be warm."
+            val response = shortModel.generateContent(prompt)
             response.text?.trim() ?: "Thank you for sharing. What's the strongest emotion you feel right now? 💜"
         }.fold(
             onSuccess = { Result.Success(it) },

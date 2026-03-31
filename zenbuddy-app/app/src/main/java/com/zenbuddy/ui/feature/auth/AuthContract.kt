@@ -11,7 +11,7 @@ data class AuthUiState(
 )
 
 sealed interface AuthUiEvent {
-    data class Login(val email: String, val password: String) : AuthUiEvent
+    data class Login(val displayName: String, val password: String) : AuthUiEvent
     data class Register(val email: String, val password: String, val displayName: String) : AuthUiEvent
     data object SwitchMode : AuthUiEvent
     data object DismissError : AuthUiEvent

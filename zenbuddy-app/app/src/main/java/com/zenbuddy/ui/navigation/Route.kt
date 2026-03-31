@@ -11,4 +11,6 @@ sealed class Route(val path: String) {
     data object Breathing : Route("breathing")
     data object Insights : Route("insights")
     data object Settings : Route("settings")
+    data object Lofi : Route("lofi")
+    data object Games : Route("games")
 }

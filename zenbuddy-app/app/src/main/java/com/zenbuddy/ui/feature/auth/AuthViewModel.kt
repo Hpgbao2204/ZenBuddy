@@ -23,21 +23,21 @@ class AuthViewModel @Inject constructor(
 
     fun onEvent(event: AuthUiEvent) {
         when (event) {
-            is AuthUiEvent.Login -> login(event.email, event.password)
+            is AuthUiEvent.Login -> login(event.displayName, event.password)
             is AuthUiEvent.Register -> register(event.email, event.password, event.displayName)
-            is AuthUiEvent.SwitchMode -> _state.update { it.copy(isLoginMode = !it.isLoginMode, error = null) }
+            is AuthUiEvent.SwitchMode -> _state.update { it.copy(isLoginMode = !it.isLoginMode, error = null, verificationSent = false) }
             is AuthUiEvent.DismissError -> _state.update { it.copy(error = null) }
         }
     }
 
-    private fun login(email: String, password: String) {
-        if (email.isBlank() || password.isBlank()) {
+    private fun login(displayName: String, password: String) {
+        if (displayName.isBlank() || password.isBlank()) {
             _state.update { it.copy(error = "Please fill in all fields") }
             return
         }
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            authRepository.login(email, password)
+            authRepository.loginWithDisplayName(displayName, password)
                 .onSuccess { user ->
                     _state.update { it.copy(isLoading = false, user = user) }
                     // Sync data from cloud after login
@@ -61,8 +61,9 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             authRepository.register(email, password, displayName)
-                .onSuccess { user ->
-                    _state.update { it.copy(isLoading = false, user = user, verificationSent = true) }
+                .onSuccess {
+                    // Don't set user — require email verification first
+                    _state.update { it.copy(isLoading = false, verificationSent = true) }
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Registration failed") }

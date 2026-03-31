@@ -6,9 +6,10 @@ import androidx.room.PrimaryKey
 import com.zenbuddy.domain.model.MoodEntry
 import java.util.UUID
 
-@Entity(tableName = "moods", indices = [Index("createdAt")])
+@Entity(tableName = "moods", indices = [Index("createdAt"), Index("userId")])
 data class MoodEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val userId: String = "",
     val score: Int,
     val note: String? = null,
     val isSynced: Boolean = false,
@@ -22,8 +23,9 @@ fun MoodEntity.toDomain(): MoodEntry = MoodEntry(
     createdAt = createdAt
 )
 
-fun MoodEntry.toEntity(isSynced: Boolean = false): MoodEntity = MoodEntity(
+fun MoodEntry.toEntity(userId: String = "", isSynced: Boolean = false): MoodEntity = MoodEntity(
     id = id,
+    userId = userId,
     score = score,
     note = note,
     isSynced = isSynced,

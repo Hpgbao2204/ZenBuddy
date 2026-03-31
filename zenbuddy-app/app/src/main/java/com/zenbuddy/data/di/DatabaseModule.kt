@@ -25,7 +25,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "zenbuddy.db"
-        ).build()
+        ).fallbackToDestructiveMigration(true).build()
 
     @Provides
     fun provideMoodDao(db: AppDatabase): MoodDao = db.moodDao()

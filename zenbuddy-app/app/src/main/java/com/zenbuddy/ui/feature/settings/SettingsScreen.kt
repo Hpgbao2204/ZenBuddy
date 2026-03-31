@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,14 +25,18 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,9 +63,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.zenbuddy.app.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 private const val PREFS_NAME = "zenbuddy_prefs"
 private const val KEY_REMINDERS = "reminders_enabled"
@@ -79,6 +88,11 @@ fun SettingsScreen(
     var showAboutDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
+
+    // Admin: registered users
+    var showRegisteredUsers by remember { mutableStateOf(false) }
+    var registeredUsers by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var usersLoading by remember { mutableStateOf(false) }
 
     if (showClearDialog) {
         AlertDialog(
@@ -285,6 +299,97 @@ fun SettingsScreen(
                     tintColor = MaterialTheme.colorScheme.error,
                     onClick = { showLogoutDialog = true }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Admin — Registered Users (debug builds only)
+            if (BuildConfig.DEBUG) {
+                Text(
+                    text = "Admin (Debug)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.People,
+                    title = "Registered Users",
+                    subtitle = if (registeredUsers.isEmpty()) "Tap to load from Firestore" else "${registeredUsers.size} users loaded",
+                    onClick = {
+                        if (showRegisteredUsers && registeredUsers.isNotEmpty()) {
+                            showRegisteredUsers = false
+                        } else {
+                            usersLoading = true
+                            showRegisteredUsers = true
+                            CoroutineScope(Dispatchers.Main).launch {
+                                try {
+                                    val snapshot = FirebaseFirestore.getInstance()
+                                        .collection("users")
+                                        .get()
+                                        .await()
+                                    registeredUsers = snapshot.documents.mapNotNull { doc ->
+                                        val data = doc.data ?: return@mapNotNull null
+                                        mapOf(
+                                            "displayName" to (data["displayName"] as? String ?: "—"),
+                                            "email" to (data["email"] as? String ?: "—"),
+                                            "uid" to (data["uid"] as? String ?: doc.id)
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    registeredUsers = emptyList()
+                                }
+                                usersLoading = false
+                            }
+                        }
+                    }
+                )
+
+                AnimatedVisibility(visible = showRegisteredUsers) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            if (usersLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp).align(Alignment.CenterHorizontally),
+                                    strokeWidth = 2.dp
+                                )
+                            } else if (registeredUsers.isEmpty()) {
+                                Text(
+                                    text = "No users found",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                registeredUsers.forEachIndexed { index, user ->
+                                    if (index > 0) Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "${index + 1}. ${user["displayName"]}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "   ${user["email"]}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "   uid: ${(user["uid"] as String).take(12)}...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

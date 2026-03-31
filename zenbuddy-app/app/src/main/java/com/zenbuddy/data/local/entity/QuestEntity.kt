@@ -8,6 +8,7 @@ import java.util.UUID
 @Entity(tableName = "quests")
 data class QuestEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val userId: String = "",
     val title: String,
     val isCompleted: Boolean = false,
     val generatedForDate: String,
@@ -23,8 +24,9 @@ fun QuestEntity.toDomain(): Quest = Quest(
     createdAt = createdAt
 )
 
-fun Quest.toEntity(isSynced: Boolean = false): QuestEntity = QuestEntity(
+fun Quest.toEntity(userId: String = "", isSynced: Boolean = false): QuestEntity = QuestEntity(
     id = id,
+    userId = userId,
     title = title,
     isCompleted = isCompleted,
     generatedForDate = generatedForDate,

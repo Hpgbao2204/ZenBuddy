@@ -7,6 +7,7 @@ import com.zenbuddy.data.local.dao.QuestDao
 import com.zenbuddy.data.local.entity.toDomain
 import com.zenbuddy.data.local.entity.toEntity
 import com.zenbuddy.domain.model.Quest
+import com.zenbuddy.domain.repository.AuthRepository
 import com.zenbuddy.domain.repository.QuestRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -21,14 +22,17 @@ import javax.inject.Inject
 
 class QuestRepositoryImpl @Inject constructor(
     private val questDao: QuestDao,
+    private val authRepository: AuthRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : QuestRepository {
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
+    private fun uid(): String = authRepository.getCurrentUserId() ?: ""
+
     override fun getQuestsForToday(): Flow<Result<List<Quest>>> {
         val today = dateFormat.format(Date())
-        return questDao.getQuestsForDate(today)
+        return questDao.getQuestsForDate(uid(), today)
             .map<_, Result<List<Quest>>> { entities ->
                 Result.Success(entities.map { it.toDomain() })
             }
@@ -38,7 +42,7 @@ class QuestRepositoryImpl @Inject constructor(
 
     override fun getActiveQuestCount(): Flow<Result<Int>> {
         val today = dateFormat.format(Date())
-        return questDao.getActiveQuestCount(today)
+        return questDao.getActiveQuestCount(uid(), today)
             .map<_, Result<Int>> { count -> Result.Success(count) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
@@ -46,7 +50,7 @@ class QuestRepositoryImpl @Inject constructor(
 
     override suspend fun saveQuests(quests: List<Quest>): Result<Unit> =
         withContext(ioDispatcher) {
-            runCatching { questDao.insertAll(quests.map { it.toEntity() }) }
+            runCatching { questDao.insertAll(quests.map { it.toEntity(userId = uid()) }) }
                 .fold(
                     onSuccess = { Result.Success(Unit) },
                     onFailure = { Result.Error(AppError.DatabaseError(it.message ?: "Insert failed")) }

@@ -25,7 +25,9 @@ class MainActivity : ComponentActivity() {
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val onboardingDone = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
-        val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        val isLoggedIn = firebaseUser != null &&
+            (BuildConfig.DEBUG || firebaseUser.isEmailVerified)
 
         val startDestination = when {
             !isLoggedIn -> Route.Auth.path

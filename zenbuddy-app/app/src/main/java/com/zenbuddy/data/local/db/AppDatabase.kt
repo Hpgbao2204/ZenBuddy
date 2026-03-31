@@ -18,7 +18,7 @@ import com.zenbuddy.data.local.entity.QuestEntity
         ChatMessageEntity::class,
         QuestEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

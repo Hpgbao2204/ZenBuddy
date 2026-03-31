@@ -97,6 +97,13 @@ fun AuthScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
+    // Reset fields when switching modes
+    LaunchedEffect(state.isLoginMode) {
+        email = ""
+        password = ""
+        displayName = ""
+    }
+
     // Animations
     val logoScale = remember { Animatable(0f) }
     val cardAlpha = remember { Animatable(0f) }
@@ -172,33 +179,12 @@ fun AuthScreen(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Display Name (Register only)
-                    AnimatedVisibility(visible = !state.isLoginMode) {
-                        OutlinedTextField(
-                            value = displayName,
-                            onValueChange = { displayName = it },
-                            label = { Text("Display Name") },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                            keyboardActions = KeyboardActions(
-                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                            )
-                        )
-                    }
-
-                    // Email
+                    // Display Name (always shown — used as login identifier)
                     OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        value = displayName,
+                        onValueChange = { displayName = it },
+                        label = { Text(if (state.isLoginMode) "Username" else "Display Name") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -206,14 +192,35 @@ fun AuthScreen(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                         ),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next
-                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(
                             onNext = { focusManager.moveFocus(FocusDirection.Down) }
                         )
                     )
+
+                    // Email (Register only)
+                    AnimatedVisibility(visible = !state.isLoginMode) {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Email") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            )
+                        )
+                    }
 
                     // Password
                     OutlinedTextField(
@@ -247,7 +254,7 @@ fun AuthScreen(
                             onDone = {
                                 focusManager.clearFocus()
                                 if (state.isLoginMode) {
-                                    onEvent(AuthUiEvent.Login(email.trim(), password))
+                                    onEvent(AuthUiEvent.Login(displayName.trim(), password))
                                 } else {
                                     onEvent(AuthUiEvent.Register(email.trim(), password, displayName.trim()))
                                 }
@@ -270,7 +277,7 @@ fun AuthScreen(
                     Button(
                         onClick = {
                             if (state.isLoginMode) {
-                                onEvent(AuthUiEvent.Login(email.trim(), password))
+                                onEvent(AuthUiEvent.Login(displayName.trim(), password))
                             } else {
                                 onEvent(AuthUiEvent.Register(email.trim(), password, displayName.trim()))
                             }
@@ -313,7 +320,7 @@ fun AuthScreen(
                     )
                 ) {
                     Text(
-                        text = "✉️ Verification email sent! Check your inbox to verify your account.",
+                        text = "✉️ Registration successful! A verification email has been sent. Please verify your email before logging in.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         textAlign = TextAlign.Center,

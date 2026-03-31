@@ -8,6 +8,7 @@ import java.util.UUID
 @Entity(tableName = "chat_messages")
 data class ChatMessageEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val userId: String = "",
     val text: String,
     val isFromUser: Boolean,
     val sessionId: String,
@@ -22,8 +23,9 @@ fun ChatMessageEntity.toDomain(): ChatMessage = ChatMessage(
     createdAt = createdAt
 )
 
-fun ChatMessage.toEntity(): ChatMessageEntity = ChatMessageEntity(
+fun ChatMessage.toEntity(userId: String = ""): ChatMessageEntity = ChatMessageEntity(
     id = id,
+    userId = userId,
     text = text,
     isFromUser = isFromUser,
     sessionId = sessionId,

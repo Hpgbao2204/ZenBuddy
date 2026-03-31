@@ -32,6 +32,8 @@ import com.zenbuddy.ui.feature.journal.JournalRoute
 import com.zenbuddy.ui.feature.mood.MoodRoute
 import com.zenbuddy.ui.feature.onboarding.OnboardingScreen
 import com.zenbuddy.ui.feature.quest.QuestRoute
+import com.zenbuddy.ui.feature.games.GamesScreen
+import com.zenbuddy.ui.feature.lofi.LofiScreen
 import com.zenbuddy.ui.feature.settings.SettingsScreen
 
 data class BottomNavItem(
@@ -54,7 +56,9 @@ private val noBottomBarRoutes = setOf(
     Route.Breathing.path,
     Route.Insights.path,
     Route.Settings.path,
-    Route.Onboarding.path
+    Route.Onboarding.path,
+    Route.Lofi.path,
+    Route.Games.path
 )
 
 @Composable
@@ -130,7 +134,9 @@ fun ZenNavGraph(
                     onNavigateToQuests = { navController.navigate(Route.Quests.path) },
                     onNavigateToBreathing = { navController.navigate(Route.Breathing.path) },
                     onNavigateToInsights = { navController.navigate(Route.Insights.path) },
-                    onNavigateToSettings = { navController.navigate(Route.Settings.path) }
+                    onNavigateToSettings = { navController.navigate(Route.Settings.path) },
+                    onNavigateToLofi = { navController.navigate(Route.Lofi.path) },
+                    onNavigateToGames = { navController.navigate(Route.Games.path) }
                 )
             }
             composable(Route.Mood.path) {
@@ -160,6 +166,12 @@ fun ZenNavGraph(
                         }
                     }
                 )
+            }
+            composable(Route.Lofi.path) {
+                LofiScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.Games.path) {
+                GamesScreen(onNavigateBack = { navController.popBackStack() })
             }
         }
     }

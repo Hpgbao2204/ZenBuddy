@@ -8,6 +8,7 @@ import java.util.UUID
 @Entity(tableName = "journals")
 data class JournalEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val userId: String = "",
     val text: String,
     val audioPath: String? = null,
     val isSynced: Boolean = false,
@@ -21,8 +22,9 @@ fun JournalEntity.toDomain(): JournalEntry = JournalEntry(
     createdAt = createdAt
 )
 
-fun JournalEntry.toEntity(isSynced: Boolean = false): JournalEntity = JournalEntity(
+fun JournalEntry.toEntity(userId: String = "", isSynced: Boolean = false): JournalEntity = JournalEntity(
     id = id,
+    userId = userId,
     text = text,
     audioPath = audioPath,
     isSynced = isSynced,

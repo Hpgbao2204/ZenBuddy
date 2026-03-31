@@ -9,7 +9,6 @@ import com.zenbuddy.data.local.entity.JournalEntity
 import com.zenbuddy.data.local.entity.MoodEntity
 import com.zenbuddy.data.local.entity.QuestEntity
 import com.zenbuddy.domain.repository.SyncRepository
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,33 +29,31 @@ class SyncRepositoryImpl @Inject constructor(
         val userId = uid ?: return Result.failure(Exception("Not logged in"))
         val userDoc = firestore.collection("users").document(userId)
 
-        // Sync moods
-        val moods = moodDao.getAllMoods().first()
-        moods.forEach { mood ->
+        // Sync unsynced moods
+        val unsyncedMoods = moodDao.getUnsynced(userId)
+        unsyncedMoods.forEach { mood ->
             userDoc.collection("moods").document(mood.id).set(mood.toMap()).await()
         }
+        if (unsyncedMoods.isNotEmpty()) {
+            moodDao.markSynced(unsyncedMoods.map { it.id })
+        }
 
-        // Sync journals
-        val journals = journalDao.getAllJournals().first()
-        journals.forEach { journal ->
+        // Sync unsynced journals
+        val unsyncedJournals = journalDao.getUnsynced(userId)
+        unsyncedJournals.forEach { journal ->
             userDoc.collection("journals").document(journal.id).set(journal.toMap()).await()
         }
-
-        // Sync quests (get today's but we sync all via unsynced)
-        val quests = questDao.getUnsynced()
-        quests.forEach { quest ->
-            userDoc.collection("quests").document(quest.id).set(quest.toMap()).await()
-        }
-        if (quests.isNotEmpty()) {
-            questDao.markSynced(quests.map { it.id })
-        }
-
-        // Mark moods & journals synced
-        val unsyncedMoods = moodDao.getUnsynced()
-        unsyncedMoods.forEach { moodDao.update(it.copy(isSynced = true)) }
-        val unsyncedJournals = journalDao.getUnsynced()
         if (unsyncedJournals.isNotEmpty()) {
             journalDao.markSynced(unsyncedJournals.map { it.id })
+        }
+
+        // Sync unsynced quests
+        val unsyncedQuests = questDao.getUnsynced(userId)
+        unsyncedQuests.forEach { quest ->
+            userDoc.collection("quests").document(quest.id).set(quest.toMap()).await()
+        }
+        if (unsyncedQuests.isNotEmpty()) {
+            questDao.markSynced(unsyncedQuests.map { it.id })
         }
 
         Result.success(Unit)
@@ -71,18 +68,18 @@ class SyncRepositoryImpl @Inject constructor(
         // Fetch moods from Firestore
         val moodDocs = userDoc.collection("moods").get().await()
         moodDocs.documents.forEach { doc ->
-            doc.toMoodEntity()?.let { moodDao.insert(it) }
+            doc.toMoodEntity(userId)?.let { moodDao.insert(it) }
         }
 
         // Fetch journals from Firestore
         val journalDocs = userDoc.collection("journals").get().await()
         journalDocs.documents.forEach { doc ->
-            doc.toJournalEntity()?.let { journalDao.insert(it) }
+            doc.toJournalEntity(userId)?.let { journalDao.insert(it) }
         }
 
         // Fetch quests from Firestore
         val questDocs = userDoc.collection("quests").get().await()
-        val questEntities = questDocs.documents.mapNotNull { it.toQuestEntity() }
+        val questEntities = questDocs.documents.mapNotNull { it.toQuestEntity(userId) }
         if (questEntities.isNotEmpty()) {
             questDao.insertAll(questEntities)
         }
@@ -114,10 +111,11 @@ class SyncRepositoryImpl @Inject constructor(
         "createdAt" to createdAt
     )
 
-    private fun com.google.firebase.firestore.DocumentSnapshot.toMoodEntity(): MoodEntity? {
+    private fun com.google.firebase.firestore.DocumentSnapshot.toMoodEntity(userId: String): MoodEntity? {
         return try {
             MoodEntity(
                 id = getString("id") ?: return null,
+                userId = userId,
                 score = getLong("score")?.toInt() ?: 3,
                 note = getString("note"),
                 isSynced = true,
@@ -126,10 +124,11 @@ class SyncRepositoryImpl @Inject constructor(
         } catch (_: Exception) { null }
     }
 
-    private fun com.google.firebase.firestore.DocumentSnapshot.toJournalEntity(): JournalEntity? {
+    private fun com.google.firebase.firestore.DocumentSnapshot.toJournalEntity(userId: String): JournalEntity? {
         return try {
             JournalEntity(
                 id = getString("id") ?: return null,
+                userId = userId,
                 text = getString("text") ?: "",
                 audioPath = getString("audioPath"),
                 isSynced = true,
@@ -138,10 +137,11 @@ class SyncRepositoryImpl @Inject constructor(
         } catch (_: Exception) { null }
     }
 
-    private fun com.google.firebase.firestore.DocumentSnapshot.toQuestEntity(): QuestEntity? {
+    private fun com.google.firebase.firestore.DocumentSnapshot.toQuestEntity(userId: String): QuestEntity? {
         return try {
             QuestEntity(
                 id = getString("id") ?: return null,
+                userId = userId,
                 title = getString("title") ?: "",
                 isCompleted = getBoolean("isCompleted") ?: false,
                 generatedForDate = getString("generatedForDate") ?: "",
