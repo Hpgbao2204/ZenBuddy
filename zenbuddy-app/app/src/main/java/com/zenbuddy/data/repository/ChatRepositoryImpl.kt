@@ -170,7 +170,15 @@ class ChatRepositoryImpl @Inject constructor(
         )
 
     private fun parseTasksJson(raw: String): List<String> {
-        val cleaned = raw.substringAfter("[").substringBefore("]")
-        return cleaned.split(",").map { it.trim().removeSurrounding("\"") }
+        // Extract strings between quotes from JSON array like ["task1", "task2", "task3"]
+        val pattern = Regex(""""([^"]+)"""")
+        val matches = pattern.findAll(raw).map { it.groupValues[1] }.toList()
+        return if (matches.isNotEmpty()) matches else {
+            // Fallback: split by newlines for numbered list responses like "1. Task one\n2. Task two"
+            raw.lines()
+                .map { it.trim().removePrefix("-").removePrefix("1.").removePrefix("2.").removePrefix("3.").trim() }
+                .filter { it.isNotBlank() && it.length > 3 }
+                .take(3)
+        }
     }
 }

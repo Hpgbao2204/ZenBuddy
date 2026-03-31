@@ -18,6 +18,8 @@ sealed interface JournalUiEvent {
     data object SaveEntry : JournalUiEvent
     data object ToggleRecording : JournalUiEvent
     data object DismissReflection : JournalUiEvent
+    data class SpeechResult(val text: String) : JournalUiEvent
+    data class SpeechError(val message: String) : JournalUiEvent
 }
 
 sealed interface JournalEffect {

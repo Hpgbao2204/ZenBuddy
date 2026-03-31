@@ -39,6 +39,16 @@ class JournalViewModel @Inject constructor(
             JournalUiEvent.SaveEntry -> saveEntry()
             JournalUiEvent.ToggleRecording -> toggleRecording()
             JournalUiEvent.DismissReflection -> _uiState.update { it.copy(aiReflection = null) }
+            is JournalUiEvent.SpeechResult -> {
+                _uiState.update {
+                    val current = it.inputText
+                    val separator = if (current.isNotBlank() && !current.endsWith(" ")) " " else ""
+                    it.copy(inputText = current + separator + event.text)
+                }
+            }
+            is JournalUiEvent.SpeechError -> {
+                _uiState.update { it.copy(isRecording = false, error = event.message) }
+            }
         }
     }
 
