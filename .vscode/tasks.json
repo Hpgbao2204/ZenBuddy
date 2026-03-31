@@ -1,0 +1,47 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build & Install Debug",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/zenbuddy-app && source ${workspaceFolder}/.env.local 2>/dev/null; ./gradlew installDebug --no-daemon",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/zenbuddy-app && source ${workspaceFolder}/.env.local 2>/dev/null; ./gradlew test --no-daemon",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Logcat",
+            "type": "shell",
+            "command": "adb logcat --pid=$(adb shell pidof -s com.zenbuddy.app) | grep -v 'chatty'",
+            "isBackground": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -180,7 +180,7 @@ Run with `Ctrl+Shift+B` (default build task) or `Ctrl+Shift+P` → "Tasks: Run T
 adb logcat
 
 # Filter by app package only
-adb logcat --pid=$(adb shell pidof -s com.zenbuddy)
+adb logcat --pid=$(adb s\hell pidof -s com.zenbuddy)
 
 # Filter by tag
 adb logcat -s ZenBuddy:D
