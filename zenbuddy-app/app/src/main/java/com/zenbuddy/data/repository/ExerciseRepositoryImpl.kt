@@ -23,19 +23,19 @@ class ExerciseRepositoryImpl @Inject constructor(
 
     override fun getAllExercises(): Flow<Result<List<Exercise>>> =
         exerciseDao.getAllExercises()
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<Exercise>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 
     override fun getByMuscleGroup(group: String): Flow<Result<List<Exercise>>> =
         exerciseDao.getByMuscleGroup(group)
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<Exercise>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 
     override fun getMuscleGroups(): Flow<Result<List<String>>> =
         exerciseDao.getMuscleGroups()
-            .map { Result.Success(it) }
+            .map<_, Result<List<String>>> { Result.Success(it) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 

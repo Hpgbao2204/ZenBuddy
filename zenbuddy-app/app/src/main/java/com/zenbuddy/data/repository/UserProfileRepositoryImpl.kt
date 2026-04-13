@@ -23,7 +23,7 @@ class UserProfileRepositoryImpl @Inject constructor(
 
     override fun getProfile(): Flow<Result<UserProfile>> =
         userProfileDao.getProfile()
-            .map { entity -> Result.Success(entity?.toDomain() ?: UserProfile()) }
+            .map<_, Result<UserProfile>> { entity -> Result.Success(entity?.toDomain() ?: UserProfile()) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 

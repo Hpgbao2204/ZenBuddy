@@ -41,13 +41,13 @@ class FoodRepositoryImpl @Inject constructor(
 
     override fun getFoodByDate(date: String): Flow<Result<List<FoodEntry>>> =
         foodDao.getFoodByDate(date)
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<FoodEntry>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 
     override fun getTotalCaloriesByDate(date: String): Flow<Result<Double>> =
         foodDao.getTotalCaloriesByDate(date)
-            .map { Result.Success(it ?: 0.0) }
+            .map<_, Result<Double>> { Result.Success(it ?: 0.0) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 

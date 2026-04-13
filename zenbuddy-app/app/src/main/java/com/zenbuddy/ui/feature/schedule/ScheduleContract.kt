@@ -9,15 +9,16 @@ data class ScheduleUiState(
     val isLoading: Boolean = false,
     val showAddDialog: Boolean = false,
     val showAiSchedule: Boolean = false,
-    val aiScheduleContent: String? = null,
+    val aiScheduleEntries: List<ScheduleEntry> = emptyList(),
     val isGeneratingAi: Boolean = false,
     val error: String? = null,
 
     // Add dialog fields
     val newTitle: String = "",
     val newDescription: String = "",
-    val newTime: String = "",
-    val newType: String = "general",
+    val newTimeHour: Int = 8,
+    val newTimeMinute: Int = 0,
+    val newType: String = "custom",
     val newReminderEnabled: Boolean = true
 )
 
@@ -27,7 +28,8 @@ sealed interface ScheduleUiEvent {
     data object DismissAddDialog : ScheduleUiEvent
     data class UpdateTitle(val title: String) : ScheduleUiEvent
     data class UpdateDescription(val desc: String) : ScheduleUiEvent
-    data class UpdateTime(val time: String) : ScheduleUiEvent
+    data class UpdateTimeHour(val hour: Int) : ScheduleUiEvent
+    data class UpdateTimeMinute(val minute: Int) : ScheduleUiEvent
     data class UpdateType(val type: String) : ScheduleUiEvent
     data class UpdateReminder(val enabled: Boolean) : ScheduleUiEvent
     data object SaveEntry : ScheduleUiEvent

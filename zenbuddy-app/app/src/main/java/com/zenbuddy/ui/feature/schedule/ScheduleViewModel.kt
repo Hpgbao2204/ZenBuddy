@@ -40,25 +40,26 @@ class ScheduleViewModel @Inject constructor(
             }
             ScheduleUiEvent.ShowAddDialog -> _uiState.update { it.copy(showAddDialog = true) }
             ScheduleUiEvent.DismissAddDialog -> _uiState.update {
-                it.copy(showAddDialog = false, newTitle = "", newDescription = "", newTime = "", newType = "general", newReminderEnabled = true)
+                it.copy(showAddDialog = false, newTitle = "", newDescription = "", newTimeHour = 8, newTimeMinute = 0, newType = "custom", newReminderEnabled = true)
             }
             is ScheduleUiEvent.UpdateTitle -> _uiState.update { it.copy(newTitle = event.title) }
             is ScheduleUiEvent.UpdateDescription -> _uiState.update { it.copy(newDescription = event.desc) }
-            is ScheduleUiEvent.UpdateTime -> _uiState.update { it.copy(newTime = event.time) }
+            is ScheduleUiEvent.UpdateTimeHour -> _uiState.update { it.copy(newTimeHour = event.hour) }
+            is ScheduleUiEvent.UpdateTimeMinute -> _uiState.update { it.copy(newTimeMinute = event.minute) }
             is ScheduleUiEvent.UpdateType -> _uiState.update { it.copy(newType = event.type) }
             is ScheduleUiEvent.UpdateReminder -> _uiState.update { it.copy(newReminderEnabled = event.enabled) }
             ScheduleUiEvent.SaveEntry -> saveEntry()
             is ScheduleUiEvent.ToggleComplete -> toggleComplete(event.entry)
             is ScheduleUiEvent.DeleteEntry -> deleteEntry(event.entry)
             ScheduleUiEvent.GenerateAiSchedule -> generateAiSchedule()
-            ScheduleUiEvent.DismissAiSchedule -> _uiState.update { it.copy(showAiSchedule = false, aiScheduleContent = null) }
+            ScheduleUiEvent.DismissAiSchedule -> _uiState.update { it.copy(showAiSchedule = false, aiScheduleEntries = emptyList()) }
         }
     }
 
     private fun loadEntries() {
         viewModelScope.launch {
             val dateStr = _uiState.value.selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
-            scheduleRepository.getEntriesByDate(dateStr).collect { result ->
+            scheduleRepository.getByDate(dateStr).collect { result ->
                 when (result) {
                     is Result.Success -> _uiState.update { it.copy(entries = result.data, isLoading = false) }
                     is Result.Error -> _uiState.update { it.copy(error = result.error.message, isLoading = false) }
@@ -74,31 +75,32 @@ class ScheduleViewModel @Inject constructor(
 
         val entry = ScheduleEntry(
             date = state.selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
-            time = state.newTime.ifBlank { "08:00" },
+            timeHour = state.newTimeHour,
+            timeMinute = state.newTimeMinute,
             title = state.newTitle,
             description = state.newDescription,
             type = state.newType,
             isCompleted = false,
-            reminderEnabled = state.newReminderEnabled
+            isReminderEnabled = state.newReminderEnabled
         )
 
         viewModelScope.launch {
             scheduleRepository.addEntry(entry)
             _uiState.update {
-                it.copy(showAddDialog = false, newTitle = "", newDescription = "", newTime = "", newType = "general", newReminderEnabled = true)
+                it.copy(showAddDialog = false, newTitle = "", newDescription = "", newTimeHour = 8, newTimeMinute = 0, newType = "custom", newReminderEnabled = true)
             }
         }
     }
 
     private fun toggleComplete(entry: ScheduleEntry) {
         viewModelScope.launch {
-            scheduleRepository.updateEntry(entry.copy(isCompleted = !entry.isCompleted))
+            scheduleRepository.markCompleted(entry.id, !entry.isCompleted)
         }
     }
 
     private fun deleteEntry(entry: ScheduleEntry) {
         viewModelScope.launch {
-            scheduleRepository.deleteEntry(entry)
+            scheduleRepository.deleteEntry(entry.id)
         }
     }
 
@@ -112,12 +114,12 @@ class ScheduleViewModel @Inject constructor(
                 "${p.gender}, ${p.age} tuổi, ${p.weightKg}kg, mục tiêu: ${p.goalType}, hoạt động: ${p.activityLevel}"
             } else "Không có thông tin"
 
-            val existingEntries = _uiState.value.entries.joinToString("; ") { "${it.time} - ${it.title}" }
+            val existingEntries = _uiState.value.entries
 
             healthAiRepository.generateDailySchedule(profile, existingEntries).collect { result ->
                 when (result) {
                     is Result.Success -> _uiState.update {
-                        it.copy(aiScheduleContent = result.data, isGeneratingAi = false)
+                        it.copy(aiScheduleEntries = result.data, isGeneratingAi = false)
                     }
                     is Result.Error -> _uiState.update {
                         it.copy(error = result.error.message, isGeneratingAi = false)

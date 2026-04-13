@@ -23,13 +23,13 @@ class ScheduleRepositoryImpl @Inject constructor(
 
     override fun getByDate(date: String): Flow<Result<List<ScheduleEntry>>> =
         scheduleDao.getByDate(date)
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<ScheduleEntry>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 
     override fun getUpcoming(fromDate: String): Flow<Result<List<ScheduleEntry>>> =
         scheduleDao.getUpcoming(fromDate)
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<ScheduleEntry>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
 

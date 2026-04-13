@@ -131,7 +131,7 @@ fun ScheduleScreen(
                     }
                 }
 
-                items(uiState.entries.sortedBy { it.time }, key = { it.id }) { entry ->
+                items(uiState.entries.sortedBy { it.timeHour * 60 + it.timeMinute }, key = { it.id }) { entry ->
                     ScheduleEntryCard(
                         entry = entry,
                         onToggle = { onEvent(ScheduleUiEvent.ToggleComplete(entry)) },
@@ -166,8 +166,12 @@ fun ScheduleScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Đang tạo lịch trình...", style = MaterialTheme.typography.bodySmall)
                 }
-                uiState.aiScheduleContent?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                uiState.aiScheduleEntries.forEach { entry ->
+                    Text(
+                        "%02d:%02d - %s: %s".format(entry.timeHour, entry.timeMinute, entry.title, entry.description),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -283,7 +287,7 @@ private fun ScheduleEntryCard(
             }
 
             Text(
-                text = entry.time,
+                text = "%02d:%02d".format(entry.timeHour, entry.timeMinute),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -328,8 +332,22 @@ private fun AddEntryDialog(
                     maxLines = 2
                 )
                 OutlinedTextField(
-                    value = uiState.newTime,
-                    onValueChange = { onEvent(ScheduleUiEvent.UpdateTime(it)) },
+                    value = "%02d:%02d".format(uiState.newTimeHour, uiState.newTimeMinute),
+                    onValueChange = { input ->
+                        val parts = input.replace(Regex("[^0-9:]"), "").split(":")
+                        if (parts.size >= 2) {
+                            parts[0].toIntOrNull()?.coerceIn(0, 23)?.let { h ->
+                                onEvent(ScheduleUiEvent.UpdateTimeHour(h))
+                            }
+                            parts[1].toIntOrNull()?.coerceIn(0, 59)?.let { m ->
+                                onEvent(ScheduleUiEvent.UpdateTimeMinute(m))
+                            }
+                        } else if (parts.size == 1) {
+                            parts[0].toIntOrNull()?.coerceIn(0, 23)?.let { h ->
+                                onEvent(ScheduleUiEvent.UpdateTimeHour(h))
+                            }
+                        }
+                    },
                     label = { Text("Giờ (VD: 08:00)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true

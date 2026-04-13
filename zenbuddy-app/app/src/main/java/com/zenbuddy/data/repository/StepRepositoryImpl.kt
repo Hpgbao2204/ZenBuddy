@@ -29,7 +29,7 @@ class StepRepositoryImpl @Inject constructor(
     override fun getTodaySteps(): Flow<Result<StepCount>> {
         val today = LocalDate.now().format(dateFormatter)
         return stepDao.getStepsByDate(today)
-            .map { entity ->
+            .map<_, Result<StepCount>> { entity ->
                 Result.Success(entity?.toDomain() ?: StepCount(date = today))
             }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
@@ -39,7 +39,7 @@ class StepRepositoryImpl @Inject constructor(
     override fun getWeeklySteps(): Flow<Result<List<StepCount>>> {
         val weekAgo = LocalDate.now().minusDays(6).format(dateFormatter)
         return stepDao.getStepsFrom(weekAgo)
-            .map { entities -> Result.Success(entities.map { it.toDomain() }) }
+            .map<_, Result<List<StepCount>>> { entities -> Result.Success(entities.map { it.toDomain() }) }
             .catch { emit(Result.Error(AppError.DatabaseError(it.message ?: "DB error"))) }
             .flowOn(ioDispatcher)
     }
