@@ -2,10 +2,15 @@ package com.zenbuddy.ui.feature.dashboard
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.Priority
 import com.zenbuddy.core.result.Result
 import com.zenbuddy.domain.repository.FoodRepository
 import com.zenbuddy.domain.repository.StepRepository
@@ -112,22 +117,52 @@ class DashboardViewModel @Inject constructor(
 
     private fun fetchWeather() {
         viewModelScope.launch {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-            ) return@launch
+            val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            if (!hasFine && !hasCoarse) return@launch
 
             try {
                 locationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        viewModelScope.launch {
-                            val result = weatherRepository.getWeather(it.latitude, it.longitude)
-                            if (result is Result.Success) {
-                                _uiState.update { state -> state.copy(weather = result.data) }
-                            }
-                        }
+                    if (location != null) {
+                        loadWeatherForLocation(location.latitude, location.longitude)
+                    } else {
+                        // lastLocation is null, request a fresh location
+                        requestFreshLocation()
                     }
+                }.addOnFailureListener {
+                    requestFreshLocation()
                 }
             } catch (_: SecurityException) { }
+        }
+    }
+
+    @Suppress("MissingPermission")
+    private fun requestFreshLocation() {
+        try {
+            val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L)
+                .setMaxUpdates(1)
+                .build()
+            locationClient.requestLocationUpdates(
+                request,
+                object : LocationCallback() {
+                    override fun onLocationResult(result: LocationResult) {
+                        result.lastLocation?.let { loc ->
+                            loadWeatherForLocation(loc.latitude, loc.longitude)
+                        }
+                        locationClient.removeLocationUpdates(this)
+                    }
+                },
+                Looper.getMainLooper()
+            )
+        } catch (_: SecurityException) { }
+    }
+
+    private fun loadWeatherForLocation(lat: Double, lon: Double) {
+        viewModelScope.launch {
+            val result = weatherRepository.getWeather(lat, lon)
+            if (result is Result.Success) {
+                _uiState.update { state -> state.copy(weather = result.data) }
+            }
         }
     }
 }
