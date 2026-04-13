@@ -39,6 +39,7 @@ class FoodScannerViewModel @Inject constructor(
             FoodScannerUiEvent.DismissAddDialog -> _uiState.update { it.copy(showAddDialog = false) }
             is FoodScannerUiEvent.AddManualFood -> addManualFood(event.entry)
             is FoodScannerUiEvent.DeleteFood -> deleteFood(event.id)
+            FoodScannerUiEvent.DismissError -> _uiState.update { it.copy(error = null) }
         }
     }
 

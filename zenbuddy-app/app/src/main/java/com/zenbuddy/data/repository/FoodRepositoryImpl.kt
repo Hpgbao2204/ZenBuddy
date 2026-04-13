@@ -1,5 +1,7 @@
 package com.zenbuddy.data.repository
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
@@ -8,7 +10,6 @@ import com.zenbuddy.core.di.IoDispatcher
 import com.zenbuddy.core.error.AppError
 import com.zenbuddy.core.result.Result
 import com.zenbuddy.data.local.dao.FoodDao
-import com.zenbuddy.data.local.entity.FoodEntryEntity
 import com.zenbuddy.data.local.entity.toDomain
 import com.zenbuddy.data.local.entity.toEntity
 import com.zenbuddy.domain.model.FoodEntry
@@ -69,23 +70,42 @@ class FoodRepositoryImpl @Inject constructor(
 
     override fun analyzeFoodImage(imageBytes: ByteArray): Flow<Result<FoodEntry>> = flow {
         emit(Result.Loading)
+
+        // Downsample large images to avoid OOM and speed up Gemini processing
+        val bitmap = decodeSampledBitmap(imageBytes, 1024, 1024)
+            ?: throw Exception("Không thể đọc hình ảnh. Hãy thử chụp lại.")
+
         val prompt = """
-            Analyze this food image. Respond in exactly this JSON format (no markdown):
-            {"name":"food name","calories":123,"protein":10.0,"carbs":20.0,"fat":5.0}
+            Analyze this food image. Respond in exactly this JSON format (no markdown, no extra text):
+            {"name":"food name in Vietnamese","calories":123,"protein":10.0,"carbs":20.0,"fat":5.0}
             Estimate nutrition per serving. Be accurate for Vietnamese cuisine.
+            If you cannot identify food, respond: {"name":"Không nhận diện được","calories":0,"protein":0,"carbs":0,"fat":0}
         """.trimIndent()
 
         val response = visionModel.generateContent(
             content {
-                image(android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size))
+                image(bitmap)
                 text(prompt)
             }
         )
-        val text = response.text?.trim() ?: throw Exception("No response")
-        val json = text.removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+        val text = response.text?.trim()
+            ?: throw Exception("AI không phản hồi. Hãy thử lại.")
+
+        // Extract JSON from response, handling potential markdown wrapper
+        val jsonStr = text
+            .removePrefix("```json").removePrefix("```")
+            .removeSuffix("```")
+            .trim()
+            .let { raw ->
+                // In case AI returns extra text before/after JSON
+                val start = raw.indexOf('{')
+                val end = raw.lastIndexOf('}')
+                if (start >= 0 && end > start) raw.substring(start, end + 1) else raw
+            }
 
         val gson = com.google.gson.Gson()
-        val parsed = gson.fromJson(json, FoodNutrition::class.java)
+        val parsed = gson.fromJson(jsonStr, FoodNutrition::class.java)
+            ?: throw Exception("Không thể phân tích kết quả AI")
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
         emit(
@@ -103,8 +123,30 @@ class FoodRepositoryImpl @Inject constructor(
             )
         )
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "Food analysis failed")))
+        emit(Result.Error(AppError.AiError(e.message ?: "Phân tích thất bại. Hãy thử lại.")))
     }.flowOn(ioDispatcher)
+
+    private fun decodeSampledBitmap(bytes: ByteArray, reqWidth: Int, reqHeight: Int): Bitmap? {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+        options.inJustDecodeBounds = false
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height, width) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
+    }
 }
 
 private data class FoodNutrition(

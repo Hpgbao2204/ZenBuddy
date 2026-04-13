@@ -201,6 +201,35 @@ fun FoodScannerScreen(
                 }
             }
 
+            // Error display
+            uiState.error?.let { errorMsg ->
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "⚠️ Lỗi phân tích",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                errorMsg,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(onClick = { onEvent(FoodScannerUiEvent.DismissError) }) {
+                                Text("Đóng")
+                            }
+                        }
+                    }
+                }
+            }
+
             // Analyzed food confirmation
             uiState.analyzedFood?.let { food ->
                 item {
@@ -254,10 +283,6 @@ fun FoodScannerScreen(
             onDismiss = { onEvent(FoodScannerUiEvent.DismissAddDialog) },
             onConfirm = { entry -> onEvent(FoodScannerUiEvent.AddManualFood(entry)) }
         )
-    }
-
-    uiState.error?.let {
-        // Show a snackbar or toast for error
     }
 }
 

@@ -23,4 +23,5 @@ sealed interface FoodScannerUiEvent {
     data object DismissAddDialog : FoodScannerUiEvent
     data class AddManualFood(val entry: FoodEntry) : FoodScannerUiEvent
     data class DeleteFood(val id: String) : FoodScannerUiEvent
+    data object DismissError : FoodScannerUiEvent
 }
