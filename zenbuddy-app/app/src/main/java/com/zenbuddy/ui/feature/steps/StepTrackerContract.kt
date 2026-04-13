@@ -13,4 +13,5 @@ data class StepTrackerUiState(
 
 sealed interface StepTrackerUiEvent {
     data object Refresh : StepTrackerUiEvent
+    data object PermissionGranted : StepTrackerUiEvent
 }

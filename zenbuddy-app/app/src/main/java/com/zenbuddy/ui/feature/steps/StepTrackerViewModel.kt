@@ -29,17 +29,18 @@ class StepTrackerViewModel @Inject constructor(
 
     private val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
     private var initialStepCount: Int? = null
+    private var sensorStarted = false
 
     init {
         _uiState.update { it.copy(sensorAvailable = stepSensorManager.isAvailable) }
         loadProfile()
         observeSteps()
-        observeSensor()
     }
 
     fun onEvent(event: StepTrackerUiEvent) {
         when (event) {
             StepTrackerUiEvent.Refresh -> loadProfile()
+            StepTrackerUiEvent.PermissionGranted -> observeSensor()
         }
     }
 
@@ -76,6 +77,8 @@ class StepTrackerViewModel @Inject constructor(
     }
 
     private fun observeSensor() {
+        if (sensorStarted) return
+        sensorStarted = true
         viewModelScope.launch {
             stepSensorManager.observeSteps().collect { totalSteps ->
                 if (initialStepCount == null) {
