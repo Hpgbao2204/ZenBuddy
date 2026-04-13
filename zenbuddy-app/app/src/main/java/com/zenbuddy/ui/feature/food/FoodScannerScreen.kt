@@ -49,7 +49,30 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zenbuddy.domain.model.FoodEntry
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.io.File
 import java.util.UUID
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun FoodScannerRoute(
@@ -57,11 +80,43 @@ fun FoodScannerRoute(
     onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.onEvent(FoodScannerUiEvent.OpenCamera)
+        }
+    }
+
     FoodScannerScreen(
         uiState = uiState,
-        onEvent = viewModel::onEvent,
+        onEvent = { event ->
+            when (event) {
+                FoodScannerUiEvent.OpenCamera -> {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        viewModel.onEvent(event)
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }
+                else -> viewModel.onEvent(event)
+            }
+        },
         onNavigateBack = onNavigateBack
     )
+
+    if (uiState.isCameraOpen) {
+        CameraScreen(
+            onPhotoCaptured = { bytes ->
+                viewModel.onEvent(FoodScannerUiEvent.PhotoCaptured(bytes))
+            },
+            onClose = { viewModel.onEvent(FoodScannerUiEvent.CloseCamera) }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -326,4 +381,107 @@ private fun ManualFoodDialog(
             TextButton(onClick = onDismiss) { Text("Hủy") }
         }
     )
+}
+
+@Composable
+private fun CameraScreen(
+    onPhotoCaptured: (ByteArray) -> Unit,
+    onClose: () -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val imageCapture = remember { ImageCapture.Builder().build() }
+    var isCapturing by remember { mutableStateOf(false) }
+
+    BackHandler { onClose() }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            val future = ProcessCameraProvider.getInstance(context)
+            future.addListener({ future.get().unbindAll() }, ContextCompat.getMainExecutor(context))
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        AndroidView(
+            factory = { ctx ->
+                PreviewView(ctx).also { previewView ->
+                    val future = ProcessCameraProvider.getInstance(ctx)
+                    future.addListener({
+                        val cameraProvider = future.get()
+                        val preview = Preview.Builder().build().also {
+                            it.surfaceProvider = previewView.surfaceProvider
+                        }
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageCapture
+                        )
+                    }, ContextCompat.getMainExecutor(ctx))
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Close button
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+        ) {
+            Icon(Icons.Default.Close, contentDescription = "Đóng", tint = Color.White)
+        }
+
+        // Capture button
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 48.dp)
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    if (!isCapturing) {
+                        isCapturing = true
+                        val file = File(context.cacheDir, "food_capture_${System.currentTimeMillis()}.jpg")
+                        val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
+                        imageCapture.takePicture(
+                            outputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                    val bytes = file.readBytes()
+                                    file.delete()
+                                    onPhotoCaptured(bytes)
+                                    isCapturing = false
+                                }
+                                override fun onError(exception: ImageCaptureException) {
+                                    isCapturing = false
+                                }
+                            }
+                        )
+                    }
+                },
+                containerColor = Color.White,
+                modifier = Modifier.size(72.dp)
+            ) {
+                Icon(
+                    Icons.Default.CameraAlt,
+                    contentDescription = "Chụp ảnh",
+                    tint = Color.Black,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
+
+        if (isCapturing) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.White
+            )
+        }
+    }
 }
