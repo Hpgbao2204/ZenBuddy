@@ -279,18 +279,18 @@ fun DashboardScreen(
             }
 
             // Weekly Steps Chart
-            if (uiState.weeklySteps.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Bước chân 7 ngày qua",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Bước chân 7 ngày qua",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    if (uiState.weeklySteps.isNotEmpty()) {
                         WeeklyBarChart(
                             steps = uiState.weeklySteps,
                             goal = uiState.stepGoal,
@@ -298,6 +298,19 @@ fun DashboardScreen(
                                 .fillMaxWidth()
                                 .height(120.dp)
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Chưa có dữ liệu. Hãy bắt đầu đi bộ! 🚶",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
