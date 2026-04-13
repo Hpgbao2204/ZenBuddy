@@ -3,9 +3,14 @@ package com.zenbuddy.data.di
 import android.content.Context
 import androidx.room.Room
 import com.zenbuddy.data.local.dao.ChatDao
+import com.zenbuddy.data.local.dao.ExerciseDao
+import com.zenbuddy.data.local.dao.FoodDao
 import com.zenbuddy.data.local.dao.JournalDao
 import com.zenbuddy.data.local.dao.MoodDao
 import com.zenbuddy.data.local.dao.QuestDao
+import com.zenbuddy.data.local.dao.ScheduleDao
+import com.zenbuddy.data.local.dao.StepDao
+import com.zenbuddy.data.local.dao.UserProfileDao
 import com.zenbuddy.data.local.db.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -38,4 +43,19 @@ object DatabaseModule {
 
     @Provides
     fun provideQuestDao(db: AppDatabase): QuestDao = db.questDao()
+
+    @Provides
+    fun provideStepDao(db: AppDatabase): StepDao = db.stepDao()
+
+    @Provides
+    fun provideFoodDao(db: AppDatabase): FoodDao = db.foodDao()
+
+    @Provides
+    fun provideExerciseDao(db: AppDatabase): ExerciseDao = db.exerciseDao()
+
+    @Provides
+    fun provideUserProfileDao(db: AppDatabase): UserProfileDao = db.userProfileDao()
+
+    @Provides
+    fun provideScheduleDao(db: AppDatabase): ScheduleDao = db.scheduleDao()
 }

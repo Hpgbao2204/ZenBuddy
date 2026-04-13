@@ -28,6 +28,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "GEMINI_API_KEY", "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"")
+        buildConfigField("String", "WEATHER_API_KEY", "\"${localProperties.getProperty("WEATHER_API_KEY", "")}\"")
     }
 
     buildTypes {
@@ -103,6 +104,24 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+
+    // CameraX
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+
+    // Location
+    implementation(libs.play.services.location)
+
+    // Charts
+    implementation(libs.vico.compose)
+
+    // Gson
+    implementation(libs.gson)
+
+    // DataStore
+    implementation(libs.datastore.preferences)
 
     // Test
     testImplementation(libs.junit)

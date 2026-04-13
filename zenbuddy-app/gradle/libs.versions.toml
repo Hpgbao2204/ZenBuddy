@@ -15,6 +15,11 @@ retrofit = "2.11.0"
 okhttp = "4.12.0"
 firebase-bom = "33.7.0"
 google-services = "4.4.2"
+camerax = "1.4.1"
+play-services-location = "21.3.0"
+vico = "2.0.0-beta.3"
+gson = "2.11.0"
+datastore = "1.1.1"
 
 [libraries]
 # AndroidX Core
@@ -58,6 +63,19 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+# CameraX
+camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+# Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "play-services-location" }
+# Charts (Vico - Compose native)
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+# Gson standalone
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+# DataStore
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 # Test
 junit = { group = "junit", name = "junit", version = "4.13.2" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version = "1.2.1" }
