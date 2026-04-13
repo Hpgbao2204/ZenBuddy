@@ -13,4 +13,13 @@ sealed class Route(val path: String) {
     data object Settings : Route("settings")
     data object Lofi : Route("lofi")
     data object Games : Route("games")
+
+    // Health tracking routes
+    data object Dashboard : Route("dashboard")
+    data object StepTracker : Route("step_tracker")
+    data object FoodScanner : Route("food_scanner")
+    data object ExerciseLibrary : Route("exercise_library")
+    data object Profile : Route("profile")
+    data object HealthChat : Route("health_chat")
+    data object Schedule : Route("schedule")
 }

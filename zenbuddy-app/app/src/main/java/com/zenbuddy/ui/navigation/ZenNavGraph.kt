@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -26,15 +27,22 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.zenbuddy.ui.feature.auth.AuthRoute
 import com.zenbuddy.ui.feature.breathing.BreathingScreen
 import com.zenbuddy.ui.feature.chat.ChatRoute
+import com.zenbuddy.ui.feature.dashboard.DashboardRoute
+import com.zenbuddy.ui.feature.exercise.ExerciseLibraryRoute
+import com.zenbuddy.ui.feature.food.FoodScannerRoute
+import com.zenbuddy.ui.feature.healthchat.HealthChatRoute
 import com.zenbuddy.ui.feature.home.HomeRoute
 import com.zenbuddy.ui.feature.insights.InsightsRoute
 import com.zenbuddy.ui.feature.journal.JournalRoute
 import com.zenbuddy.ui.feature.mood.MoodRoute
 import com.zenbuddy.ui.feature.onboarding.OnboardingScreen
+import com.zenbuddy.ui.feature.profile.ProfileRoute
 import com.zenbuddy.ui.feature.quest.QuestRoute
 import com.zenbuddy.ui.feature.games.GamesScreen
 import com.zenbuddy.ui.feature.lofi.LofiScreen
+import com.zenbuddy.ui.feature.schedule.ScheduleRoute
 import com.zenbuddy.ui.feature.settings.SettingsScreen
+import com.zenbuddy.ui.feature.steps.StepTrackerRoute
 
 data class BottomNavItem(
     val route: Route,
@@ -44,10 +52,10 @@ data class BottomNavItem(
 
 val bottomNavItems = listOf(
     BottomNavItem(Route.Home, "Home", Icons.Default.Home),
+    BottomNavItem(Route.Dashboard, "Health", Icons.Default.Favorite),
     BottomNavItem(Route.Mood, "Mood", Icons.Default.EmojiEmotions),
     BottomNavItem(Route.Journal, "Journal", Icons.AutoMirrored.Filled.MenuBook),
-    BottomNavItem(Route.Chat, "Chat", Icons.AutoMirrored.Filled.Chat),
-    BottomNavItem(Route.Quests, "Quests", Icons.Default.Star)
+    BottomNavItem(Route.Chat, "Chat", Icons.AutoMirrored.Filled.Chat)
 )
 
 // Routes that should NOT show the bottom nav bar
@@ -58,7 +66,13 @@ private val noBottomBarRoutes = setOf(
     Route.Settings.path,
     Route.Onboarding.path,
     Route.Lofi.path,
-    Route.Games.path
+    Route.Games.path,
+    Route.StepTracker.path,
+    Route.FoodScanner.path,
+    Route.ExerciseLibrary.path,
+    Route.Profile.path,
+    Route.HealthChat.path,
+    Route.Schedule.path
 )
 
 @Composable
@@ -172,6 +186,34 @@ fun ZenNavGraph(
             }
             composable(Route.Games.path) {
                 GamesScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.Dashboard.path) {
+                DashboardRoute(
+                    onNavigateToSteps = { navController.navigate(Route.StepTracker.path) },
+                    onNavigateToFood = { navController.navigate(Route.FoodScanner.path) },
+                    onNavigateToExercises = { navController.navigate(Route.ExerciseLibrary.path) },
+                    onNavigateToSchedule = { navController.navigate(Route.Schedule.path) },
+                    onNavigateToHealthChat = { navController.navigate(Route.HealthChat.path) },
+                    onNavigateToProfile = { navController.navigate(Route.Profile.path) }
+                )
+            }
+            composable(Route.StepTracker.path) {
+                StepTrackerRoute(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.FoodScanner.path) {
+                FoodScannerRoute(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.ExerciseLibrary.path) {
+                ExerciseLibraryRoute(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.Profile.path) {
+                ProfileRoute(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.HealthChat.path) {
+                HealthChatRoute(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Route.Schedule.path) {
+                ScheduleRoute(onNavigateBack = { navController.popBackStack() })
             }
         }
     }
