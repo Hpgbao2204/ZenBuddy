@@ -1,7 +1,7 @@
-% Biên dịch khuyến nghị: XeLaTeX + Biber
+% Biên dịch trên Overleaf: pdfLaTeX + BibTeX
 \documentclass{zenbuddy-report}
 
-\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\usepackage[backend=bibtex,style=numeric,sorting=none]{biblatex}
 \addbibresource{references.bib}
 
 \renewcommand{\contentsname}{Mục lục}
@@ -20,8 +20,8 @@
 \reportuniversity{[Điền tên trường đại học]}
 \reportfaculty{[Điền tên khoa]}
 \reportdepartment{[Điền tên bộ môn]}
-\reportauthor{[Điền họ và tên sinh viên]}
-\reportstudentid{[Điền mã số sinh viên]}
+\reportauthor{\shortstack[l]{Huỳnh Phan Gia Bảo\\Lương Xuân Anh}}
+\reportstudentid{\shortstack[l]{23520104\\23520051}}
 \reportadvisor{[Điền tên giảng viên hướng dẫn]}
 \reportlocation{[Điền địa điểm]}
 \reportdate{Tháng 04 năm 2026}
@@ -38,7 +38,7 @@ Tài liệu này được soạn dựa trên việc khảo sát mã nguồn củ
 
 \chapter*{Lời cảm ơn}
 \addcontentsline{toc}{chapter}{Lời cảm ơn}
-Em xin chân thành cảm ơn giảng viên hướng dẫn, quý thầy cô bộ môn và các bạn học đã hỗ trợ em trong quá trình thực hiện đồ án này. Trong khuôn khổ báo cáo hiện tại, phần lời cảm ơn có thể được điều chỉnh lại cho phù hợp với bối cảnh thực tế, tên môn học, tên đơn vị đào tạo và các cá nhân hỗ trợ trực tiếp.
+Nhóm chúng em xin chân thành cảm ơn giảng viên hướng dẫn, quý thầy cô bộ môn và các bạn học đã hỗ trợ trong quá trình thực hiện đồ án này. Trong khuôn khổ báo cáo hiện tại, phần lời cảm ơn có thể được điều chỉnh lại cho phù hợp với bối cảnh thực tế, tên môn học, tên đơn vị đào tạo và các cá nhân hỗ trợ trực tiếp.
 
 \chapter*{Tóm tắt}
 \addcontentsline{toc}{chapter}{Tóm tắt}
@@ -776,6 +776,62 @@ T10 & Bật dark mode & Giao diện đổi sang palette tối và giữ được
 \bottomrule
 \end{longtable}
 
+\section{Phân công công việc của nhóm}
+Trong quá trình thực hiện đồ án, hai thành viên cùng tham gia thảo luận yêu cầu, thống nhất định hướng sản phẩm, rà soát UI/UX và kiểm thử tích hợp trước khi hoàn thiện phiên bản cuối. Để bảo đảm khối lượng công việc cân bằng, nhóm phân chia theo hướng mỗi thành viên phụ trách chính một cụm chức năng có độ phức tạp tương đương, đồng thời vẫn hỗ trợ chéo ở giai đoạn hoàn thiện.
+
+\begin{table}[H]
+\centering
+\caption{Phân công công việc đề xuất giữa hai thành viên}
+\label{tab:team-allocation}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{4.1cm}>{\bfseries}p{3.6cm}X}
+\toprule
+Hạng mục & Thành viên phụ trách chính & Nội dung thực hiện \\
+\midrule
+Phân tích yêu cầu, phác thảo ý tưởng sản phẩm và định hướng giao diện & Cả hai & Cùng xác định bài toán, phân tách hai cụm chức năng tinh thần và thể chất, xây dựng luồng sử dụng tổng quát và tiêu chí trải nghiệm người dùng. \\
+Kiến trúc project, điều hướng, xác thực và đồng bộ cloud & Huỳnh Phan Gia Bảo & Tổ chức cấu trúc phân tầng, thiết kế điều hướng, triển khai đăng nhập/đăng ký, onboarding, tích hợp Firebase Authentication và Firestore cho các module tinh thần. \\
+Module chăm sóc sức khỏe tinh thần & Huỳnh Phan Gia Bảo & Hiện thực mood tracking, journal, chat AI, healing quests, breathing, lofi và các thành phần liên quan đến ngữ cảnh tinh thần. \\
+Module sức khỏe thể chất và tích hợp thiết bị & Lương Xuân Anh & Hiện thực dashboard sức khỏe, profile, step tracker, exercise library, food scanner, weather và các luồng khai thác camera, vị trí, cảm biến. \\
+AI sức khỏe, lịch trình và dữ liệu cá nhân hóa & Lương Xuân Anh & Tích hợp meal plan, workout plan, health advice, schedule generation, cùng các phép tính BMI, BMR, TDEE phục vụ cá nhân hóa. \\
+Kiểm thử tích hợp, sửa lỗi chéo module, hoàn thiện báo cáo và chuẩn bị demo & Cả hai & Cùng kiểm tra nghiệp vụ đầu-cuối, rà soát giao diện, sửa lỗi tương thích và tổng hợp nội dung thuyết trình, báo cáo. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{reportnote}
+Nếu cần thể hiện mức đóng góp theo tỷ lệ, nhóm có thể ghi nhận theo hướng cân bằng 50\% -- 50\%. Bảng trên mô tả phần phụ trách chính của từng người, không hàm ý mỗi thành viên chỉ làm đúng các module được gán.
+\end{reportnote}
+
+\section{Những bài học kinh nghiệm rút ra từ đồ án}
+Quá trình thực hiện \appname\ đem lại cho nhóm nhiều kinh nghiệm có giá trị cả về kỹ thuật lẫn phương pháp làm việc.
+
+\subsection{Bài học về kỹ thuật}
+\begin{itemize}
+  \item Nhóm hiểu sâu hơn cách tổ chức một ứng dụng Android hiện đại theo kiến trúc phân tầng, trong đó UI, domain và data cần được tách rõ để mã nguồn dễ mở rộng và dễ bảo trì.
+  \item Việc sử dụng Jetpack Compose giúp nhóm nhận ra tầm quan trọng của quản lý trạng thái, luồng dữ liệu một chiều và cách kết hợp ViewModel với coroutine để giữ giao diện phản hồi tốt.
+  \item Khi tích hợp Firebase, Room, Gemini API, CameraX, cảm biến và dịch vụ thời tiết trong cùng một project, nhóm học được cách quản lý phụ thuộc, chuẩn hóa model dữ liệu và xử lý bất đồng bộ giữa nhiều nguồn dữ liệu.
+  \item Quá trình thiết kế prompt và đọc phản hồi JSON từ AI cho thấy việc dùng mô hình ngôn ngữ trong sản phẩm thực tế không chỉ là gọi API, mà còn phải quan tâm đến độ ổn định định dạng, ngữ cảnh đầu vào và giới hạn an toàn.
+  \item Nhóm rút ra rằng các tính năng liên quan đến thiết bị thật như camera, cảm biến bước chân hay vị trí cần được kiểm thử sớm trên môi trường thật, vì hành vi của emulator không phản ánh đầy đủ điều kiện sử dụng thực tế.
+\end{itemize}
+
+\subsection{Bài học về quy trình làm việc}
+\begin{itemize}
+  \item Khi phạm vi đồ án rộng, việc chia module rõ ràng ngay từ đầu giúp giảm xung đột mã nguồn và giúp mỗi thành viên chủ động hơn trong tiến độ cá nhân.
+  \item Việc thống nhất quy ước đặt tên, cấu trúc package và cách tổ chức state từ sớm giúp giảm thời gian sửa lỗi tích hợp ở giai đoạn cuối.
+  \item Nhóm nhận thấy tài liệu hóa quá trình làm việc, ghi chú các quyết định kỹ thuật và chụp lại ảnh giao diện theo từng mốc là rất cần thiết để viết báo cáo nhanh và chính xác hơn.
+  \item Kiểm thử không nên dồn đến cuối dự án; các luồng quan trọng như đăng nhập, lưu dữ liệu, đồng bộ và gọi AI cần được kiểm tra định kỳ trong suốt quá trình phát triển.
+\end{itemize}
+
+\section{Khó khăn trong quá trình thực hiện đồ án}
+Trong quá trình phát triển hệ thống, nhóm gặp một số khó khăn đáng chú ý như sau:
+\begin{itemize}
+  \item Phạm vi chức năng của đồ án tương đối rộng, bao gồm cả sức khỏe tinh thần lẫn sức khỏe thể chất, nên việc giữ cho sản phẩm có trải nghiệm thống nhất là một thách thức lớn.
+  \item Việc tích hợp đồng thời nhiều công nghệ như Firebase, Room, Gemini API, OpenWeather, CameraX, cảm biến và foreground service làm tăng đáng kể độ phức tạp của khâu cấu hình và debug.
+  \item Một số chức năng phụ thuộc vào thiết bị thật như bước chân, camera và vị trí khiến quá trình kiểm thử chậm hơn so với các module chỉ xử lý dữ liệu thuần túy.
+  \item Phản hồi từ AI có tính xác suất, do đó nhóm phải tinh chỉnh prompt nhiều lần để tăng độ ổn định của nội dung sinh ra, đặc biệt ở các bài toán yêu cầu định dạng JSON.
+  \item Việc đồng thời tối ưu UI/UX, logic nghiệp vụ, hiệu năng và an toàn dữ liệu trong một khoảng thời gian đồ án có hạn khiến nhóm phải chấp nhận ưu tiên một số hạng mục cốt lõi trước các tính năng nâng cao.
+  \item Khâu hoàn thiện báo cáo cũng đòi hỏi thời gian đáng kể do cần đối chiếu chính xác giữa mã nguồn, hình ảnh giao diện, sơ đồ hệ thống và các luận điểm phân tích.
+\end{itemize}
+
 \section{Hướng phát triển tiếp theo}
 Dựa trên trạng thái hiện tại của hệ thống, các hướng phát triển hợp lý gồm:
 \begin{itemize}
@@ -791,7 +847,7 @@ Dựa trên trạng thái hiện tại của hệ thống, các hướng phát t
 \chapter{Kết luận}
 Qua quá trình khảo sát và phân tích mã nguồn, có thể khẳng định \appname\ là một đồ án có phạm vi tương đối rộng, kết hợp nhiều công nghệ hiện đại của Android và nhiều ý tưởng ứng dụng AI trong một sản phẩm duy nhất. Hệ thống không chỉ phục vụ nhu cầu ghi nhận tâm trạng và viết nhật ký mà còn mở rộng sang bước chân, thực phẩm, bài tập, hồ sơ, tư vấn và lịch trình sức khỏe. Việc tổ chức mã nguồn theo hướng phân tầng với repository, use case và viewmodel là điểm cộng lớn giúp đồ án có tính học thuật lẫn giá trị thực tiễn.
 
-Mặc dù vẫn còn các phần cần hoàn thiện như nhắc lịch, kiểm thử tự động và đồng bộ toàn diện hơn, snapshot hiện tại đã thể hiện rõ hướng phát triển của sản phẩm. Với việc tiếp tục đầu tư vào kiểm thử, tối ưu bảo mật, hoàn chỉnh luồng nhắc việc và mở rộng hệ thống phân tích dữ liệu, \appname\ có thể tiến gần hơn tới một ứng dụng chăm sóc sức khỏe số có tính ứng dụng thực tế cao.
+Mặc dù vẫn còn các phần cần hoàn thiện như nhắc lịch, kiểm thử tự động và đồng bộ toàn diện hơn, snapshot hiện tại đã thể hiện rõ hướng phát triển của sản phẩm. Quan trọng hơn, đồ án đã giúp nhóm củng cố kiến thức về phát triển ứng dụng Android hiện đại, học được cách tích hợp nhiều dịch vụ và phần cứng thiết bị trong cùng một hệ thống, đồng thời rèn luyện kỹ năng phối hợp nhóm trong một đề tài có phạm vi rộng. Với việc tiếp tục đầu tư vào kiểm thử, tối ưu bảo mật, hoàn chỉnh luồng nhắc việc và mở rộng hệ thống phân tích dữ liệu, \appname\ có thể tiến gần hơn tới một ứng dụng chăm sóc sức khỏe số có tính ứng dụng thực tế cao.
 
 \appendix
 

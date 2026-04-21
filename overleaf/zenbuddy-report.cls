@@ -5,17 +5,19 @@
 
 \RequirePackage{iftex}
 \ifPDFTeX
-  \ClassError{zenbuddy-report}{Please compile this document with XeLaTeX or LuaLaTeX}{%
-    The report contains Vietnamese text and relies on Unicode font support.%
-  }
+  \RequirePackage[utf8]{inputenc}
+  \RequirePackage[T5]{fontenc}
+  \RequirePackage[english]{babel}
+  \babelprovide[import,main]{vietnamese}
+\else
+  \RequirePackage{fontspec}
+  \RequirePackage{polyglossia}
+  \setdefaultlanguage{vietnamese}
+  \setotherlanguage{english}
+  \setmainfont{TeX Gyre Termes}
+  \setsansfont{TeX Gyre Heros}
+  \setmonofont{Latin Modern Mono}
 \fi
-
-\RequirePackage{fontspec}
-\RequirePackage{polyglossia}
-\setdefaultlanguage{vietnamese}
-\setmainfont{TeX Gyre Termes}
-\setsansfont{TeX Gyre Heros}
-\setmonofont{Latin Modern Mono}
 
 \RequirePackage{geometry}
 \geometry{
@@ -185,7 +187,7 @@
     \fi
     \vfill
     \begin{tabular}{>{\bfseries}p{4.5cm}p{8.5cm}}
-      Sinh viên thực hiện: & \@reportauthor \\
+      Nhóm sinh viên thực hiện: & \@reportauthor \\
       Mã số sinh viên: & \@reportstudentid \\
       Giảng viên hướng dẫn: & \@reportadvisor \\
     \end{tabular}
