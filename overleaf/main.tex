@@ -1,0 +1,850 @@
+% Biên dịch khuyến nghị: XeLaTeX + Biber
+\documentclass{zenbuddy-report}
+
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+\renewcommand{\contentsname}{Mục lục}
+\renewcommand{\listfigurename}{Danh mục hình vẽ}
+\renewcommand{\listtablename}{Danh mục bảng biểu}
+\renewcommand{\chaptername}{Chương}
+\renewcommand{\bibname}{Tài liệu tham khảo}
+
+\lstset{style=zenbuddy}
+
+\newcommand{\appname}{ZenBuddy}
+
+\reporttype{Báo cáo đồ án}
+\reporttitle{XÂY DỰNG ỨNG DỤNG \appname}
+\reportsubtitle{Hệ thống hỗ trợ chăm sóc sức khỏe tinh thần và thể chất trên nền tảng Android}
+\reportuniversity{[Điền tên trường đại học]}
+\reportfaculty{[Điền tên khoa]}
+\reportdepartment{[Điền tên bộ môn]}
+\reportauthor{[Điền họ và tên sinh viên]}
+\reportstudentid{[Điền mã số sinh viên]}
+\reportadvisor{[Điền tên giảng viên hướng dẫn]}
+\reportlocation{[Điền địa điểm]}
+\reportdate{Tháng 04 năm 2026}
+
+\begin{document}
+
+\makereporttitle
+
+\pagenumbering{roman}
+
+\begin{reportnote}
+Tài liệu này được soạn dựa trên việc khảo sát mã nguồn của project \appname\ trong thư mục \texttt{zenbuddy-app} tại thời điểm ngày 21/04/2026. Báo cáo đã được viết sẵn theo văn phong khoa học, đồng thời cài sẵn các placeholder cho ảnh giao diện và sơ đồ để người viết có thể thay bằng ảnh thật trước khi nộp.
+\end{reportnote}
+
+\chapter*{Lời cảm ơn}
+\addcontentsline{toc}{chapter}{Lời cảm ơn}
+Em xin chân thành cảm ơn giảng viên hướng dẫn, quý thầy cô bộ môn và các bạn học đã hỗ trợ em trong quá trình thực hiện đồ án này. Trong khuôn khổ báo cáo hiện tại, phần lời cảm ơn có thể được điều chỉnh lại cho phù hợp với bối cảnh thực tế, tên môn học, tên đơn vị đào tạo và các cá nhân hỗ trợ trực tiếp.
+
+\chapter*{Tóm tắt}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+Đồ án \appname\ hướng đến việc xây dựng một ứng dụng di động Android có khả năng hỗ trợ người dùng trong hai phương diện bổ trợ lẫn nhau: chăm sóc sức khỏe tinh thần và theo dõi sức khỏe thể chất. Ứng dụng kết hợp các chức năng theo dõi tâm trạng, viết nhật ký, hội thoại với trợ lý AI, tạo nhiệm vụ nhỏ hằng ngày, thực hành thở thư giãn, phát nhạc nền, mini game giảm căng thẳng, đồng thời cung cấp bảng điều khiển sức khỏe gồm bước chân, dinh dưỡng, bài tập, hồ sơ cá nhân, tư vấn AI và lịch trình sinh hoạt.
+
+Khảo sát mã nguồn cho thấy hệ thống được hiện thực theo kiến trúc phân tầng gồm \textit{UI - Domain - Data}, sử dụng Kotlin, Jetpack Compose, Navigation Compose, Hilt, Room, Firebase Authentication, Cloud Firestore, Retrofit, CameraX, cảm biến bước chân, Speech Recognizer và Gemini API. Dữ liệu cục bộ được quản lý bằng Room, trong khi một phần dữ liệu tinh thần được đồng bộ lên đám mây thông qua Firestore. Ứng dụng cũng tích hợp các phép tính chỉ số sức khỏe như BMI, BMR và TDEE nhằm cá nhân hóa trải nghiệm người dùng.
+
+Điểm nổi bật của đồ án là sự kết hợp giữa trải nghiệm tương tác mềm mại trên giao diện Compose với khả năng tận dụng dữ liệu ngữ cảnh người dùng để tạo phản hồi AI phù hợp. Bên cạnh đó, báo cáo cũng chỉ ra một số giới hạn hiện thời của mã nguồn như phần nhắc lịch mới dừng ở mức cấu trúc dữ liệu và receiver, đồng bộ đám mây chưa bao phủ toàn bộ module sức khỏe, và chưa có bộ kiểm thử tự động. Các nội dung này là cơ sở để đề xuất hướng phát triển tiếp theo cho hệ thống.
+
+\noindent\textbf{Từ khóa:} Android, Jetpack Compose, sức khỏe tinh thần, sức khỏe thể chất, Room, Firebase, Gemini API, CameraX, Hilt, Mobile Health.
+
+\chapter*{Danh mục chữ viết tắt}
+\addcontentsline{toc}{chapter}{Danh mục chữ viết tắt}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{2.8cm}X}
+AI & Trí tuệ nhân tạo \\
+API & Giao diện lập trình ứng dụng \\
+BMI & Chỉ số khối cơ thể \\
+BMR & Nhu cầu năng lượng cơ bản \\
+DAO & Lớp truy cập dữ liệu \\
+DI & Tiêm phụ thuộc \\
+MVVM & Mô hình Model - View - ViewModel \\
+TDEE & Tổng năng lượng tiêu hao trong ngày \\
+UI & Giao diện người dùng \\
+UX & Trải nghiệm người dùng \\
+\end{tabularx}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Giới thiệu đề tài}
+
+\section{Bối cảnh và lý do chọn đề tài}
+Sức khỏe tinh thần và sức khỏe thể chất là hai thành phần có quan hệ chặt chẽ trong đời sống hiện đại. Áp lực học tập, công việc, thiếu vận động, mất cân bằng dinh dưỡng và sự phụ thuộc ngày càng lớn vào thiết bị số khiến nhiều người có nhu cầu tìm kiếm một công cụ hỗ trợ tự theo dõi, tự điều chỉnh và chủ động chăm sóc bản thân ngay trên điện thoại. Theo Tổ chức Y tế Thế giới, sức khỏe tinh thần không chỉ là trạng thái không có rối loạn mà còn là trạng thái hạnh phúc tinh thần cho phép con người đối mặt với áp lực cuộc sống, phát huy năng lực và đóng góp cho cộng đồng \cite{who-mental-health}.
+
+Trong bối cảnh đó, việc xây dựng một ứng dụng di động tích hợp đồng thời các chức năng chăm sóc tinh thần và thể chất là một hướng tiếp cận phù hợp với xu thế \textit{mobile health}. Thay vì phát triển các tiện ích rời rạc như theo dõi bước chân, ghi nhật ký hay trò chuyện AI riêng biệt, \appname\ lựa chọn cách tích hợp các module thành một hệ thống thống nhất. Cách tiếp cận này giúp tận dụng dữ liệu ngữ cảnh của người dùng để cá nhân hóa phản hồi, đồng thời tăng tính liên tục của trải nghiệm sử dụng.
+
+\section{Mục tiêu của đồ án}
+Đồ án hướng đến các mục tiêu chính sau:
+\begin{itemize}
+  \item Xây dựng một ứng dụng Android native bằng Kotlin và Jetpack Compose có giao diện hiện đại, mạch lạc và dễ mở rộng.
+  \item Hỗ trợ người dùng ghi nhận tâm trạng, lưu nhật ký cá nhân, nhận phản hồi và khích lệ từ AI.
+  \item Tích hợp các tính năng sức khỏe thể chất gồm theo dõi bước chân, tính toán chỉ số cơ thể, quản lý bữa ăn, thư viện bài tập và lịch trình sinh hoạt.
+  \item Kết nối nhiều dịch vụ nền tảng như Firebase, Room, Gemini API, OpenWeather API, CameraX và cảm biến thiết bị.
+  \item Tạo một mã nguồn có kiến trúc rõ ràng, thuận lợi cho việc bảo trì và phát triển tiếp sau này.
+\end{itemize}
+
+\section{Đối tượng và phạm vi nghiên cứu}
+Đối tượng nghiên cứu của đồ án là ứng dụng di động Android phục vụ người dùng cá nhân trong việc tự quản lý sức khỏe tinh thần và thể chất. Phạm vi hiện thực trong snapshot mã nguồn hiện tại bao gồm:
+\begin{itemize}
+  \item Ứng dụng chạy trên Android, tối thiểu API 26, biên dịch với \texttt{compileSdk 35}.
+  \item Xác thực người dùng bằng Firebase Authentication, lưu hồ sơ cơ bản trên Firestore.
+  \item Lưu trữ dữ liệu cục bộ bằng Room cho các thực thể như tâm trạng, nhật ký, chat, quest, bước chân, thực phẩm, bài tập, hồ sơ và lịch trình.
+  \item Đồng bộ một phần dữ liệu tinh thần gồm mood, journal và quest lên Firestore.
+  \item Tích hợp AI cho chat đồng cảm, phản ánh nhật ký, phân tích xu hướng tâm trạng, sinh quest, nhận diện món ăn, tư vấn sức khỏe, thực đơn, bài tập và lịch trình.
+  \item Tích hợp cảm biến bước chân, vị trí, thời tiết, camera, foreground service phát nhạc và các tiện ích thư giãn.
+\end{itemize}
+
+Những nội dung chưa được triển khai đầy đủ ở snapshot hiện tại sẽ được phân tích tại Chương 6 như các hướng phát triển tiếp theo.
+
+\section{Phương pháp thực hiện}
+Đồ án được thực hiện theo chuỗi bước gồm: khảo sát nhu cầu người dùng; xác định các chức năng lõi; lựa chọn công nghệ phù hợp với hệ sinh thái Android hiện đại; thiết kế kiến trúc phân tầng; hiện thực lần lượt từng module; tích hợp các dịch vụ bên ngoài; sau cùng là đánh giá trạng thái hiện tại của hệ thống thông qua việc đọc và phân tích mã nguồn.
+
+\section{Đóng góp chính của hệ thống}
+Từ việc khảo sát source code, có thể rút ra các đóng góp chính của \appname\ như sau:
+\begin{itemize}
+  \item Đưa ra một mô hình ứng dụng tích hợp cả chăm sóc tinh thần và chăm sóc thể chất trong cùng một sản phẩm.
+  \item Tận dụng AI không chỉ ở khía cạnh hội thoại mà còn ở các tác vụ đa dạng như phân tích ảnh đồ ăn, sinh lịch trình, sinh thực đơn và sinh gợi ý luyện tập.
+  \item Tổ chức mã nguồn theo phong cách hiện đại, tương đối rõ ràng giữa tầng giao diện, tầng nghiệp vụ và tầng dữ liệu.
+  \item Tạo nền tảng tốt cho việc mở rộng thành sản phẩm hoàn chỉnh có đồng bộ, nhắc lịch, kiểm thử và phân tích dữ liệu nâng cao trong tương lai.
+\end{itemize}
+
+\section{Cấu trúc báo cáo}
+Báo cáo gồm bảy chương chính. Chương 1 trình bày bối cảnh, mục tiêu và phạm vi đề tài. Chương 2 giới thiệu cơ sở lý thuyết. Chương 3 khảo sát mã nguồn và yêu cầu hệ thống. Chương 4 phân tích thiết kế. Chương 5 mô tả quá trình hiện thực. Chương 6 đánh giá kết quả, hạn chế và hướng phát triển. Chương 7 là phần kết luận.
+
+\chapter{Cơ sở lý thuyết}
+
+\section{Khái niệm sức khỏe tinh thần và tự theo dõi}
+Sức khỏe tinh thần là nền tảng để con người học tập, làm việc, ra quyết định và duy trì các mối quan hệ xã hội \cite{who-mental-health}. Trong các ứng dụng số hiện đại, việc tự theo dõi cảm xúc và thói quen hằng ngày được xem là một kỹ thuật hỗ trợ nâng cao nhận thức bản thân. Hai kỹ thuật phổ biến được mã nguồn \appname\ lựa chọn là:
+\begin{itemize}
+  \item \textbf{Theo dõi tâm trạng} (\textit{mood tracking}): người dùng chấm điểm trạng thái cảm xúc theo thang điểm, có thể kèm ghi chú. Dữ liệu này giúp quan sát xu hướng tâm trạng theo thời gian.
+  \item \textbf{Viết nhật ký} (\textit{journaling}): người dùng ghi lại suy nghĩ và trải nghiệm trong ngày. Nhật ký là nguồn dữ liệu giàu ngữ cảnh, hữu ích cho việc phản hồi cá nhân hóa và tự phản tỉnh.
+\end{itemize}
+
+Trong \appname, các dữ liệu trên không chỉ được lưu trữ mà còn được sử dụng để xây dựng ngữ cảnh hội thoại AI, sinh nhiệm vụ nhỏ cải thiện cảm xúc và tạo phần phân tích xu hướng tâm trạng.
+
+\section{Trợ lý AI hỗ trợ thay vì chẩn đoán}
+Một nguyên tắc quan trọng trong thiết kế hệ thống là AI chỉ đóng vai trò \textit{hỗ trợ} chứ không thay thế chuyên gia y tế. Điều này được thể hiện trực tiếp trong prompt của module chat: trợ lý được yêu cầu đồng cảm, tránh chẩn đoán và chỉ đưa ra gợi ý hành động nhẹ nhàng. Khi người dùng xuất hiện tín hiệu tự gây hại, prompt đã chèn sẵn hướng dẫn cung cấp hotline khẩn cấp thay vì tiếp tục hội thoại thông thường. Cách thiết kế này phù hợp với định hướng an toàn khi ứng dụng AI trong lĩnh vực sức khỏe.
+
+\section{Các chỉ số sức khỏe cơ bản}
+\subsection{Chỉ số BMI}
+BMI là chỉ số khối cơ thể, được tính theo công thức \cite{cdc-bmi}:
+\begin{equation}
+BMI = \frac{W}{H^2}
+\end{equation}
+trong đó \(W\) là cân nặng tính bằng kilogram và \(H\) là chiều cao tính bằng mét. BMI được sử dụng như một chỉ báo sàng lọc ban đầu để đánh giá tình trạng thiếu cân, bình thường, thừa cân hay béo phì.
+
+\subsection{Chỉ số BMR}
+BMR là mức năng lượng tối thiểu cơ thể cần để duy trì các hoạt động sống cơ bản khi nghỉ ngơi. Trong mã nguồn \appname, BMR được tính theo công thức Harris--Benedict \cite{harris-benedict1918}:
+\begin{equation}
+BMR_{\mathrm{male}} = 88.362 + 13.397 \times W + 4.799 \times H - 5.677 \times A
+\end{equation}
+\begin{equation}
+BMR_{\mathrm{female}} = 447.593 + 9.247 \times W + 3.098 \times H - 4.330 \times A
+\end{equation}
+trong đó \(W\) là cân nặng (kg), \(H\) là chiều cao (cm) và \(A\) là tuổi.
+
+\subsection{Chỉ số TDEE}
+TDEE được tính từ BMR nhân với hệ số hoạt động. Source code hiện tại sử dụng các mức:
+\begin{itemize}
+  \item Ít vận động: \(1.2\)
+  \item Hoạt động nhẹ: \(1.375\)
+  \item Hoạt động vừa phải: \(1.55\)
+  \item Năng động: \(1.725\)
+  \item Rất năng động: \(1.9\)
+\end{itemize}
+TDEE là cơ sở để hệ thống gợi ý mục tiêu calories, thực đơn và kế hoạch luyện tập.
+
+\section{Theo dõi bước chân trên thiết bị di động}
+Android hỗ trợ cảm biến bước chân thông qua \texttt{Sensor.TYPE\_STEP\_COUNTER}. Theo tài liệu Android Developers, cảm biến này cung cấp số bước tích lũy kể từ lần khởi động gần nhất của thiết bị và yêu cầu quyền \texttt{ACTIVITY\_RECOGNITION} trên Android 10 trở lên \cite{android-step-counter}. Mã nguồn \appname\ sử dụng \texttt{StepSensorManager} để đăng ký listener, sau đó chuẩn hóa số bước trong ngày bằng cách lấy mốc khởi đầu đầu phiên theo dõi.
+
+Ngoài số bước, hệ thống còn suy ra:
+\begin{itemize}
+  \item quãng đường di chuyển ước lượng theo công thức \(\text{distance} = \text{steps} \times 0.000762\) km;
+  \item calories tiêu hao ước lượng theo công thức \(\text{calories} = \text{steps} \times 0.04 \times \frac{\text{weight}}{70}\).
+\end{itemize}
+
+\section{Lưu trữ cục bộ với Room}
+Room là thư viện bền vững dữ liệu được Android khuyến nghị cho các ứng dụng có dữ liệu cấu trúc, nhờ khả năng trừu tượng hóa SQLite, kiểm tra truy vấn ở thời điểm biên dịch và cung cấp mô hình Entity--DAO--Database rõ ràng \cite{android-room}. Đây cũng là nền tảng giúp \appname\ hỗ trợ làm việc offline cho phần lớn nghiệp vụ cốt lõi.
+
+\section{Jetpack Compose và điều hướng khai báo}
+Jetpack Compose là bộ công cụ UI hiện đại của Android dựa trên mô hình khai báo, nơi giao diện được biểu diễn như hàm của trạng thái \cite{android-compose-overview}. Kết hợp với Navigation Compose \cite{android-navigation-compose}, ứng dụng có thể định nghĩa đồ thị điều hướng bằng code, quản lý trạng thái màn hình thống nhất hơn và giảm phụ thuộc vào XML truyền thống.
+
+\section{Tiêm phụ thuộc với Hilt}
+Hilt là thư viện DI chuẩn cho Android, giúp giảm đáng kể mã khởi tạo thủ công, đồng thời tạo vùng chứa phụ thuộc gắn với vòng đời của \texttt{Application}, \texttt{Activity}, \texttt{ViewModel} và các thành phần khác \cite{android-hilt}. Trong \appname, Hilt được dùng để cung cấp database, DAO, repository, dispatcher, Firebase service và network service.
+
+\section{AI sinh nội dung và AI đa phương thức}
+Gemini API cho phép tạo nội dung văn bản và xử lý đa phương thức, trong đó tài liệu chính thức cho biết mô hình có thể sinh văn bản, tiếp nhận ảnh đầu vào và hỗ trợ các tác vụ hiểu ảnh mà không cần huấn luyện mô hình chuyên biệt \cite{google-gemini-quickstart,google-gemini-vision}. \appname\ tận dụng khả năng này cho hai hướng:
+\begin{itemize}
+  \item hội thoại đồng cảm và sinh phản hồi văn bản;
+  \item phân tích ảnh món ăn để suy ra tên món, calories và các thành phần dinh dưỡng ước lượng.
+\end{itemize}
+
+\section{Dịch vụ xác thực và đồng bộ đám mây}
+Firebase Authentication hỗ trợ xác thực người dùng, còn Cloud Firestore cung cấp cơ chế lưu trữ NoSQL trên đám mây, đồng bộ dữ liệu và truy vấn tài liệu phân cấp \cite{firebase-auth,firebase-firestore}. Snapshot hiện tại của \appname\ đang dùng Firebase để:
+\begin{itemize}
+  \item đăng ký và đăng nhập tài khoản;
+  \item xác minh email;
+  \item lưu danh sách người dùng;
+  \item đồng bộ mood, journal và quest giữa thiết bị và đám mây.
+\end{itemize}
+
+\chapter{Khảo sát mã nguồn và yêu cầu hệ thống}
+
+\section{Tổng quan cấu trúc project}
+Qua khảo sát repository, phần mã nguồn chính của ứng dụng nằm trong thư mục \texttt{zenbuddy-app}. Cấu trúc chính có thể tóm tắt như Listing~\ref{lst:project-tree}.
+
+\begin{lstlisting}[caption={Cấu trúc thư mục chính của project},label={lst:project-tree}]
+mobile-claude/
+  README.md
+  zenbuddy-app/
+    app/
+      build.gradle.kts
+      src/main/
+        AndroidManifest.xml
+        java/com/zenbuddy/
+          app/
+          core/
+          data/
+          domain/
+          ui/
+        res/
+    gradle/libs.versions.toml
+    settings.gradle.kts
+    local.properties.example
+\end{lstlisting}
+
+Phần \texttt{java/com/zenbuddy} tiếp tục được chia theo đúng vai trò kiến trúc:
+\begin{itemize}
+  \item \texttt{app}: lớp khởi tạo ứng dụng và Activity chính;
+  \item \texttt{core}: kiểu lỗi, kiểu kết quả, dispatcher, speech helper;
+  \item \texttt{data}: DAO, entity, database, repository implementation, service API, receiver, sensor;
+  \item \texttt{domain}: model, repository interface, use case;
+  \item \texttt{ui}: theme, navigation, screen, contract và viewmodel cho từng tính năng.
+\end{itemize}
+
+\section{Khảo sát cấu hình build và công nghệ}
+Thông tin trong \texttt{app/build.gradle.kts} và \texttt{gradle/libs.versions.toml} cho thấy ứng dụng được xây dựng với nền tảng công nghệ như Bảng~\ref{tab:tech-stack}.
+
+\begin{table}[H]
+\centering
+\caption{Ngăn xếp công nghệ chính của \appname}
+\label{tab:tech-stack}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.6cm}p{3.2cm}X}
+\toprule
+Thành phần & Phiên bản & Vai trò \\
+\midrule
+Android Gradle Plugin & 9.1.0 & Hệ thống build cho ứng dụng Android \\
+Kotlin & 2.1.21 & Ngôn ngữ lập trình chính \\
+Jetpack Compose BOM & 2025.02.00 & Xây dựng giao diện khai báo \\
+Navigation Compose & 2.8.9 & Điều hướng giữa các màn hình \\
+Hilt & 2.59.2 & Tiêm phụ thuộc \\
+Room & 2.7.0 & Cơ sở dữ liệu cục bộ \\
+Coroutines & 1.10.1 & Lập trình bất đồng bộ \\
+Firebase BOM & 33.7.0 & Xác thực và đồng bộ đám mây \\
+Retrofit & 2.11.0 & Gọi REST API thời tiết \\
+CameraX & 1.4.1 & Chụp ảnh thực phẩm \\
+Google Generative AI SDK & 0.9.0 & Kết nối Gemini API \\
+Vico Compose & 2.0.0-beta.3 & Biểu diễn biểu đồ bước chân \\
+DataStore & 1.1.1 & Đã khai báo dependency, chưa được dùng trực tiếp trong snapshot \\
+WorkManager & 2.10.0 & Đã khai báo dependency, chưa được dùng trực tiếp trong snapshot \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Ngoài ra, cấu hình build cho biết:
+\begin{itemize}
+  \item \texttt{minSdk = 26}, \texttt{targetSdk = 35}, \texttt{compileSdk = 35};
+  \item \texttt{JavaVersion 17};
+  \item build có khai báo hai khóa cấu hình lấy từ \texttt{local.properties}: \texttt{GEMINI\_API\_KEY} và \texttt{WEATHER\_API\_KEY}.
+\end{itemize}
+
+\section{Phân tích chức năng hệ thống}
+Dựa trên các route trong \texttt{Route.kt}, đồ thị điều hướng trong \texttt{ZenNavGraph.kt}, cùng toàn bộ screen và viewmodel hiện có, có thể tổng hợp các chức năng nghiệp vụ như Bảng~\ref{tab:functional-requirements}.
+
+\begin{longtable}{>{\bfseries}p{1.7cm}p{3.4cm}p{8.2cm}}
+\caption{Các yêu cầu chức năng rút ra từ mã nguồn}\label{tab:functional-requirements}\\
+\toprule
+Mã & Chức năng & Mô tả \\
+\midrule
+\endfirsthead
+\toprule
+Mã & Chức năng & Mô tả \\
+\midrule
+\endhead
+F01 & Xác thực tài khoản & Đăng ký bằng email, mật khẩu, display name; đăng nhập bằng display name và mật khẩu; xác minh email qua Firebase. \\
+F02 & Onboarding & Hiển thị các trang giới thiệu chức năng khi người dùng đăng nhập lần đầu. \\
+F03 & Trang chủ tinh thần & Hiển thị lời chào, tâm trạng hôm nay, quest đang hoạt động, câu khẳng định hằng ngày, truy cập nhanh đến các tiện ích tinh thần. \\
+F04 & Theo dõi tâm trạng & Cho phép chấm điểm tâm trạng theo thang 1--10 và ghi chú ngắn. \\
+F05 & Nhật ký cá nhân & Lưu nhật ký văn bản, hiển thị lịch sử và phản ánh ngắn từ AI sau khi lưu. \\
+F06 & Chat đồng cảm & Trò chuyện với AI có ngữ cảnh từ mood và journal gần đây, hỗ trợ streaming phản hồi. \\
+F07 & Healing quests & Sinh ba nhiệm vụ nhỏ hằng ngày dựa trên tâm trạng và nhật ký gần nhất; cho phép đánh dấu hoàn thành. \\
+F08 & Bài tập thở & Hướng dẫn chu trình thở 4--7--8 với hoạt ảnh vòng tròn và bộ đếm thời gian. \\
+F09 & Insights tâm trạng & Hiển thị dữ liệu mood theo giai đoạn 7, 14, 30 ngày và cho phép AI phân tích xu hướng. \\
+F10 & Lofi và mini game & Cung cấp nhạc nền thư giãn và nhóm mini game giảm căng thẳng. \\
+F11 & Dashboard sức khỏe & Hiển thị thời tiết, bước chân hôm nay, calories nạp và đốt, biểu đồ 7 ngày, cùng liên kết đến các module sức khỏe. \\
+F12 & Theo dõi bước chân & Đọc dữ liệu cảm biến bước chân, tính quãng đường và calories tiêu hao. \\
+F13 & Quản lý thực phẩm & Ghi nhận bữa ăn, thêm thủ công hoặc chụp ảnh để AI nhận diện món ăn và dinh dưỡng. \\
+F14 & Thư viện bài tập & Cung cấp danh sách bài tập mẫu, lọc theo nhóm cơ và xem hướng dẫn chi tiết. \\
+F15 & Hồ sơ sức khỏe & Nhập dữ liệu cá nhân, tính BMI, BMR, TDEE và mục tiêu hằng ngày. \\
+F16 & AI sức khỏe và lịch trình & Tư vấn sức khỏe, sinh thực đơn, lịch tập, lịch trình trong ngày và quản lý các mục lịch. \\
+F17 & Cài đặt hệ thống & Chuyển dark mode, bật tắt nhắc nhở, đồng bộ đám mây, logout, xem thông tin ứng dụng và hotline khủng hoảng. \\
+\bottomrule
+\end{longtable}
+
+\section{Yêu cầu phi chức năng}
+Từ mã nguồn hiện tại, có thể suy ra các yêu cầu phi chức năng chính như sau:
+
+\begin{table}[H]
+\centering
+\caption{Các yêu cầu phi chức năng}
+\label{tab:non-functional}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{1.8cm}p{3.6cm}X}
+\toprule
+Mã & Nhóm yêu cầu & Nội dung \\
+\midrule
+N01 & Tính khả dụng & Ứng dụng cần hoạt động ổn định trên Android 8.0 trở lên, giao diện đáp ứng tốt với thao tác cảm ứng. \\
+N02 & Tính trực quan & Giao diện thân thiện, tổ chức chức năng rõ ràng, ưu tiên cảm giác dịu nhẹ và dễ sử dụng. \\
+N03 & Khả năng mở rộng & Kiến trúc phân tầng, sử dụng repository và use case để dễ mở rộng chức năng mới. \\
+N04 & Khả năng bảo trì & Các module chia theo package hợp lý, ViewModel tách biệt logic khỏi UI. \\
+N05 & Hỗ trợ offline & Dữ liệu cục bộ được lưu bằng Room nhằm đảm bảo các tính năng cơ bản vẫn dùng được khi mất mạng. \\
+N06 & Tính an toàn & AI được cấu hình theo định hướng hỗ trợ, không chẩn đoán; có thông tin hotline trong trường hợp khẩn cấp. \\
+N07 & Hiệu năng & Sử dụng coroutine và flow để xử lý bất đồng bộ; ảnh đầu vào cho Gemini được giảm kích thước trước khi phân tích. \\
+N08 & Tính tích hợp & Hệ thống cần phối hợp đồng thời nhiều nguồn dữ liệu: cảm biến, camera, vị trí, Firebase, API thời tiết và Gemini API. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Ràng buộc triển khai}
+Qua đọc mã nguồn và file manifest, ứng dụng chịu các ràng buộc sau:
+\begin{itemize}
+  \item cần quyền Internet, camera, ghi âm, nhận diện hoạt động, vị trí và thông báo;
+  \item cần cấu hình Firebase project thực tế thông qua \texttt{google-services.json};
+  \item cần khóa API cho Gemini và thời tiết;
+  \item một số tính năng chỉ hoạt động trọn vẹn trên thiết bị thật, ví dụ cảm biến bước chân hoặc camera;
+  \item dịch vụ phát nhạc nền yêu cầu foreground service.
+\end{itemize}
+
+\chapter{Phân tích và thiết kế hệ thống}
+
+\section{Kiến trúc tổng thể}
+Kiến trúc của \appname\ bám sát mô hình phân tầng phổ biến trong Android hiện đại, gồm ba lớp chính:
+\begin{itemize}
+  \item \textbf{Tầng giao diện (UI)}: chứa screen, contract, viewmodel, navigation và theme;
+  \item \textbf{Tầng nghiệp vụ (Domain)}: chứa model, repository interface và use case;
+  \item \textbf{Tầng dữ liệu (Data)}: chứa DAO, entity, database, service API, repository implementation, sensor manager và receiver.
+\end{itemize}
+
+\placeholderfigure{Sơ đồ kiến trúc tổng thể của hệ thống \appname}{fig:architecture-overview}{Thay bằng sơ đồ thể hiện quan hệ giữa tầng UI, Domain, Data, Room, Firebase, Gemini API, OpenWeather API, CameraX và cảm biến thiết bị.}
+
+\begin{table}[H]
+\centering
+\caption{Vai trò các tầng kiến trúc}
+\label{tab:layers}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{2.7cm}p{4cm}X}
+\toprule
+Tầng & Thành phần tiêu biểu & Vai trò \\
+\midrule
+UI & \texttt{HomeScreen}, \texttt{DashboardViewModel}, \texttt{ZenNavGraph} & Hiển thị dữ liệu, nhận sự kiện từ người dùng, điều hướng và quản lý trạng thái màn hình. \\
+Domain & \texttt{SendMessageUseCase}, \texttt{GenerateQuestsUseCase}, \texttt{UserProfile} & Chứa quy tắc nghiệp vụ, mô hình cốt lõi và luồng xử lý trung gian giữa UI với Data. \\
+Data & \texttt{MoodRepositoryImpl}, \texttt{AppDatabase}, \texttt{WeatherApiService} & Giao tiếp cơ sở dữ liệu, dịch vụ ngoài, cảm biến và triển khai repository. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Thiết kế khởi động và điều hướng}
+Quá trình chọn màn hình đầu tiên của ứng dụng được thực hiện trong \texttt{MainActivity}. Logic này dựa trên hai điều kiện:
+\begin{itemize}
+  \item người dùng đã đăng nhập hợp lệ hay chưa;
+  \item người dùng đã hoàn tất onboarding hay chưa.
+\end{itemize}
+
+Nếu chưa đăng nhập, hệ thống chuyển đến màn hình \texttt{Auth}. Nếu đã đăng nhập nhưng chưa onboarding, ứng dụng đi tới \texttt{Onboarding}. Ngược lại, người dùng sẽ vào màn hình \texttt{Home}. Logic này có thể mô tả ngắn gọn như Listing~\ref{lst:start-destination}.
+
+\begin{lstlisting}[language=Kotlin,caption={Pseudocode xác định màn hình khởi động},label={lst:start-destination}]
+val onboardingDone = readPreference("onboarding_done")
+val firebaseUser = FirebaseAuth.getInstance().currentUser
+val isLoggedIn = firebaseUser != null &&
+    (BuildConfig.DEBUG || firebaseUser.isEmailVerified)
+
+val startDestination = when {
+    !isLoggedIn -> Route.Auth.path
+    !onboardingDone -> Route.Onboarding.path
+    else -> Route.Home.path
+}
+\end{lstlisting}
+
+Đồ thị điều hướng tập trung tại \texttt{ZenNavGraph.kt}. Ngoài các route tinh thần như \texttt{Home}, \texttt{Mood}, \texttt{Journal}, \texttt{Chat}, hệ thống còn có cụm route sức khỏe như \texttt{Dashboard}, \texttt{StepTracker}, \texttt{FoodScanner}, \texttt{ExerciseLibrary}, \texttt{Profile}, \texttt{HealthChat} và \texttt{Schedule}. Cách tổ chức route dạng \texttt{sealed class} giúp mã nguồn rõ ràng và tránh lỗi dùng chuỗi rời rạc.
+
+\section{Thiết kế dữ liệu cục bộ}
+Ứng dụng sử dụng một cơ sở dữ liệu Room duy nhất tên \texttt{zenbuddy.db}. Theo \texttt{AppDatabase.kt}, phiên bản hiện tại là 3 và bao gồm 9 entity. Bảng~\ref{tab:entities} tóm tắt các bảng dữ liệu.
+
+\begin{longtable}{>{\bfseries}p{3.1cm}p{4.2cm}X}
+\caption{Các entity chính trong cơ sở dữ liệu Room}\label{tab:entities}\\
+\toprule
+Entity & Mục đích & Thuộc tính nổi bật \\
+\midrule
+\endfirsthead
+\toprule
+Entity & Mục đích & Thuộc tính nổi bật \\
+\midrule
+\endhead
+\texttt{MoodEntity} & Lưu dữ liệu tâm trạng & \texttt{userId}, \texttt{score}, \texttt{note}, \texttt{isSynced}, \texttt{createdAt}. \\
+\texttt{JournalEntity} & Lưu nhật ký người dùng & \texttt{userId}, \texttt{text}, \texttt{audioPath}, \texttt{isSynced}, \texttt{createdAt}. \\
+\texttt{ChatMessageEntity} & Lưu lịch sử chat AI theo phiên & \texttt{userId}, \texttt{text}, \texttt{isFromUser}, \texttt{sessionId}, \texttt{createdAt}. \\
+\texttt{QuestEntity} & Lưu micro-task hằng ngày & \texttt{userId}, \texttt{title}, \texttt{isCompleted}, \texttt{generatedForDate}, \texttt{isSynced}. \\
+\texttt{StepCountEntity} & Lưu dữ liệu bước chân theo ngày & \texttt{date}, \texttt{steps}, \texttt{caloriesBurned}, \texttt{distanceKm}. \\
+\texttt{FoodEntryEntity} & Lưu thực phẩm đã ghi nhận & \texttt{name}, \texttt{calories}, \texttt{protein}, \texttt{carbs}, \texttt{fat}, \texttt{date}. \\
+\texttt{ExerciseEntity} & Lưu thư viện bài tập & \texttt{name}, \texttt{muscleGroup}, \texttt{difficulty}, \texttt{durationMinutes}, \texttt{instructions}. \\
+\texttt{UserProfileEntity} & Lưu hồ sơ cá nhân & \texttt{name}, \texttt{age}, \texttt{gender}, \texttt{heightCm}, \texttt{weightKg}, \texttt{goalType}. \\
+\texttt{ScheduleEntryEntity} & Lưu lịch trình sinh hoạt & \texttt{title}, \texttt{description}, \texttt{type}, \texttt{date}, \texttt{timeHour}, \texttt{timeMinute}, \texttt{isReminderEnabled}. \\
+\bottomrule
+\end{longtable}
+
+\placeholderfigure{Sơ đồ lược đồ dữ liệu Room của hệ thống}{fig:database-schema}{Thay bằng sơ đồ ERD hoặc sơ đồ các bảng Room và luồng đồng bộ lên Firestore.}
+
+\subsection{Đặc điểm thiết kế dữ liệu}
+Thiết kế dữ liệu của \appname\ có một số điểm đáng chú ý:
+\begin{itemize}
+  \item dữ liệu mood, journal, quest có thêm trường \texttt{isSynced} để phục vụ đồng bộ hai chiều với Firestore;
+  \item dữ liệu sức khỏe như bước chân, thực phẩm, hồ sơ và lịch trình đang được lưu cục bộ trong Room nhưng chưa đồng bộ đám mây ở snapshot hiện tại;
+  \item nhiều thực thể sử dụng chuỗi ngày chuẩn ISO \texttt{yyyy-MM-dd} để truy vấn theo ngày, giúp đơn giản hóa logic thống kê và hiển thị.
+\end{itemize}
+
+\section{Thiết kế tích hợp dịch vụ bên ngoài}
+\begin{table}[H]
+\centering
+\caption{Các dịch vụ và API tích hợp}
+\label{tab:integration}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.2cm}p{3.3cm}X}
+\toprule
+Dịch vụ & Thành phần mã nguồn & Vai trò \\
+\midrule
+Firebase Authentication & \texttt{AuthRepositoryImpl} & Đăng ký, đăng nhập, logout, xác minh email và theo dõi người dùng hiện tại. \\
+Cloud Firestore & \texttt{SyncRepositoryImpl}, \texttt{AuthRepositoryImpl} & Lưu hồ sơ người dùng, đồng bộ mood, journal, quest và truy vấn danh sách user ở chế độ debug. \\
+Gemini API & \texttt{ChatRepositoryImpl}, \texttt{FoodRepositoryImpl}, \texttt{HealthAiRepositoryImpl} & Sinh phản hồi hội thoại, quest, affirmation, insight, reflection, kế hoạch ăn uống, lịch tập, lịch trình và phân tích ảnh đồ ăn. \\
+OpenWeather API & \texttt{WeatherRepositoryImpl} & Lấy nhiệt độ, độ ẩm, cảm giác như và gợi ý tập luyện theo thời tiết. \\
+CameraX & \texttt{FoodScannerScreen} & Mở camera, chụp ảnh món ăn để gửi cho AI phân tích. \\
+Cảm biến bước chân & \texttt{StepSensorManager} & Đọc số bước tích lũy từ cảm biến của thiết bị. \\
+Speech Recognizer & \texttt{SpeechToTextHelper} & Chuẩn bị khả năng chuyển giọng nói thành văn bản cho phần nhật ký. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Thiết kế phân quyền và quyền truy cập thiết bị}
+Tệp \texttt{AndroidManifest.xml} cho thấy ứng dụng khai báo các quyền sau:
+\begin{itemize}
+  \item \texttt{INTERNET} để gọi API mạng;
+  \item \texttt{RECORD\_AUDIO} cho speech-to-text;
+  \item \texttt{FOREGROUND\_SERVICE} và \texttt{FOREGROUND\_SERVICE\_MEDIA\_PLAYBACK} cho phát nhạc nền;
+  \item \texttt{POST\_NOTIFICATIONS} để gửi thông báo;
+  \item \texttt{ACTIVITY\_RECOGNITION} để đọc dữ liệu bước chân;
+  \item \texttt{CAMERA} để chụp ảnh thực phẩm;
+  \item \texttt{ACCESS\_FINE\_LOCATION} và \texttt{ACCESS\_COARSE\_LOCATION} để lấy thời tiết theo vị trí;
+  \item \texttt{SCHEDULE\_EXACT\_ALARM} và \texttt{RECEIVE\_BOOT\_COMPLETED} như nền tảng cho hệ thống nhắc lịch.
+\end{itemize}
+
+\section{Thiết kế giao diện và trải nghiệm người dùng}
+Theme của \appname\ được định nghĩa trong package \texttt{ui/theme}. Bảng màu chủ đạo sử dụng tông lavender, mint và peach, phù hợp với định hướng êm dịu của một ứng dụng hỗ trợ sức khỏe tinh thần. Chế độ sáng và tối đều được định nghĩa sẵn trong \texttt{Theme.kt}; trạng thái dark mode được lưu bằng \texttt{SharedPreferences}.
+
+Giao diện được thiết kế theo tinh thần:
+\begin{itemize}
+  \item ưu tiên thành phần bo góc mềm, khoảng trắng đủ rộng và tông màu nhẹ;
+  \item dùng biểu tượng và card để gom nhóm hành động;
+  \item dùng animation đơn giản nhưng có chủ đích, đặc biệt ở trang chủ, onboarding, mood slider, lofi và breathing;
+  \item tách riêng các cụm trải nghiệm ``tinh thần'' và ``thể chất'' nhưng vẫn thống nhất trong cùng hệ điều hướng.
+\end{itemize}
+
+\chapter{Hiện thực hệ thống}
+
+\section{Hiện thực module xác thực người dùng}
+Module xác thực được tổ chức bởi ba tệp chính: \texttt{AuthScreen.kt}, \texttt{AuthViewModel.kt} và \texttt{AuthRepositoryImpl.kt}. Điểm đặc trưng của phần hiện thực này là:
+\begin{itemize}
+  \item đăng nhập bằng \textit{display name} thay vì nhập email trực tiếp;
+  \item khi đăng ký, hệ thống tạo tài khoản Firebase, cập nhật display name, gửi email xác minh và tạo thêm document user trên Firestore;
+  \item sau khi đăng nhập thành công, hệ thống thực hiện đồng bộ dữ liệu từ cloud xuống local thông qua \texttt{syncFromCloud()}.
+\end{itemize}
+
+\placeholderfigure{Placeholder màn hình đăng nhập và đăng ký}{fig:ui-auth}{Chèn ảnh thật của giao diện AuthScreen, bao gồm cả chế độ Login và Register.}
+
+\subsection{Nhận xét kỹ thuật}
+Cách đăng nhập bằng display name là lựa chọn thú vị vì thân thiện hơn với người dùng cuối. Tuy nhiên, điều này cũng làm phát sinh thêm một bước tra cứu Firestore để ánh xạ display name sang email trước khi gọi API đăng nhập Firebase. Đây là chỗ cần được cân nhắc nếu hệ thống mở rộng quy mô lớn hơn.
+
+\section{Hiện thực onboarding và điều hướng ban đầu}
+Onboarding được hiện thực bằng \texttt{HorizontalPager} trong \texttt{OnboardingScreen.kt}, gồm ba trang giới thiệu chức năng chính. Trạng thái hoàn tất onboarding được lưu vào \texttt{SharedPreferences}. Cách triển khai này phù hợp cho ứng dụng di động quy mô đồ án vì đơn giản, ít phụ thuộc và dễ kiểm soát.
+
+\placeholderfigure{Placeholder màn hình onboarding}{fig:ui-onboarding}{Chèn ảnh 1 đến 3 trang onboarding hoặc ghép thành một hình duy nhất.}
+
+\section{Hiện thực trang chủ sức khỏe tinh thần}
+Trang chủ tinh thần tại \texttt{HomeScreen.kt} đóng vai trò điểm vào chính sau khi người dùng hoàn tất onboarding. Từ source code có thể thấy trang này tổng hợp:
+\begin{itemize}
+  \item lời chào theo thời điểm trong ngày;
+  \item tâm trạng hôm nay;
+  \item câu affirmation sinh bởi AI;
+  \item liên kết nhanh đến thở thư giãn, insights, quest, chat, lofi và mini game.
+\end{itemize}
+
+\placeholderfigure{Placeholder màn hình trang chủ}{fig:ui-home}{Chèn ảnh giao diện HomeScreen với các card mood, affirmation, quick action và truy cập tính năng.}
+
+\section{Hiện thực module theo dõi tâm trạng}
+Màn hình \texttt{MoodScreen.kt} cung cấp một slider thang điểm 1--10 cùng ô ghi chú. \texttt{MoodViewModel} gọi \texttt{LogMoodUseCase} để lưu dữ liệu về Room. Sau khi lưu thành công, màn hình phát hiệu ứng chuyển về trang trước.
+
+\begin{lstlisting}[language=Kotlin,caption={Pseudocode lưu tâm trạng},label={lst:save-mood}]
+when (event) {
+    is ScoreChanged -> uiState.score = event.score
+    is NoteChanged  -> uiState.note = event.note
+    SaveMood        -> {
+        val result = logMoodUseCase(uiState.score, uiState.note)
+        if (result is Success) navigateBack()
+    }
+}
+\end{lstlisting}
+
+\placeholderfigure{Placeholder màn hình ghi nhận tâm trạng}{fig:ui-mood}{Chèn ảnh màn hình MoodScreen và thành phần slider thể hiện các mức cảm xúc.}
+
+\section{Hiện thực module nhật ký và phản hồi AI}
+Module nhật ký gồm \texttt{JournalScreen.kt}, \texttt{JournalViewModel.kt}, \texttt{JournalRepositoryImpl.kt} và \texttt{GetJournalReflectionUseCase.kt}. Sau khi người dùng nhập nội dung và lưu, hệ thống:
+\begin{enumerate}
+  \item ghi nội dung vào Room;
+  \item làm mới danh sách entry;
+  \item gửi nội dung vừa lưu cho AI để sinh phản hồi phản tỉnh ngắn;
+  \item hiển thị phản hồi trong card ở đầu màn hình.
+\end{enumerate}
+
+\placeholderfigure{Placeholder màn hình nhật ký và phản ánh AI}{fig:ui-journal}{Chèn ảnh giao diện JournalScreen, khu nhập liệu, danh sách entry và thẻ AI Reflection.}
+
+\subsection{Ghi chú về speech-to-text}
+Source code có tệp \texttt{SpeechToTextHelper.kt} và trong \texttt{JournalContract.kt} cũng đã định nghĩa trạng thái \texttt{isRecording}, sự kiện \texttt{ToggleRecording}, \texttt{SpeechResult}, \texttt{SpeechError}. Tuy nhiên, ở snapshot hiện tại, \texttt{JournalScreen.kt} chưa hiển thị nút ghi âm tương ứng. Điều này cho thấy nhóm phát triển đã chuẩn bị nền tảng kỹ thuật cho nhập nhật ký bằng giọng nói nhưng chưa tích hợp hoàn chỉnh lên giao diện.
+
+\section{Hiện thực hội thoại AI và quest trị liệu}
+\subsection{Hội thoại AI}
+Luồng chat được tổ chức tốt theo hướng dùng use case để gom ngữ cảnh. Cụ thể, \texttt{SendMessageUseCase} lấy lịch sử điểm mood gần đây và tóm tắt nhật ký gần đây, đóng gói thành \texttt{ChatContext}, sau đó mới gọi repository AI.
+
+\begin{lstlisting}[language=Kotlin,caption={Pseudocode use case gửi tin nhắn có ngữ cảnh},label={lst:send-message-usecase}]
+val moodScores = moodRepository.getRecentMoodScores().first()
+val journalSummary = journalRepository.getRecentSummary()
+
+val context = ChatContext(
+    moodHistory = moodScores,
+    journalSummary = journalSummary
+)
+
+return chatRepository.sendMessage(userMessage, context)
+\end{lstlisting}
+
+\placeholderfigure{Placeholder màn hình chat AI}{fig:ui-chat}{Chèn ảnh giao diện hội thoại ZenBuddy Chat với bubble của người dùng và AI.}
+
+\subsection{Sinh healing quests}
+Quest hằng ngày được sinh qua \texttt{GenerateQuestsUseCase}. Use case này:
+\begin{itemize}
+  \item đọc mood của ngày hiện tại;
+  \item lấy tóm tắt các nhật ký gần đây;
+  \item gọi AI để sinh đúng 3 micro-task;
+  \item ánh xạ danh sách chuỗi sang model \texttt{Quest};
+  \item lưu quest vào cơ sở dữ liệu.
+\end{itemize}
+
+\placeholderfigure{Placeholder màn hình healing quests}{fig:ui-quest}{Chèn ảnh giao diện QuestScreen và danh sách nhiệm vụ được AI sinh ra.}
+
+\section{Hiện thực insight tâm trạng}
+Màn hình \texttt{InsightsScreen.kt} cho phép xem mood theo các giai đoạn 7, 14 hoặc 30 ngày. Khi người dùng yêu cầu ``AI Analysis'', \texttt{GetMoodInsightsUseCase} sẽ lấy danh sách score gần đây rồi gọi AI sinh phần nhận xét ngắn. Đây là ví dụ điển hình của việc kết hợp dữ liệu định lượng cục bộ với khả năng diễn giải ngôn ngữ tự nhiên của AI.
+
+\placeholderfigure{Placeholder màn hình phân tích tâm trạng}{fig:ui-insights}{Chèn ảnh màn hình InsightsScreen với biểu đồ mood và phần AI Insight.}
+
+\section{Hiện thực dashboard sức khỏe}
+Dashboard trong \texttt{DashboardScreen.kt} là trung tâm của cụm tính năng thể chất. Tại đây người dùng có thể xem:
+\begin{itemize}
+  \item thông tin thời tiết tại vị trí hiện tại;
+  \item tiến độ bước chân trong ngày;
+  \item calories nạp vào, đốt cháy và còn lại;
+  \item biểu đồ bước chân 7 ngày;
+  \item các lối tắt đến food scanner, exercise library, AI tư vấn, schedule và profile.
+\end{itemize}
+
+\placeholderfigure{Placeholder màn hình dashboard sức khỏe}{fig:ui-dashboard}{Chèn ảnh DashboardScreen thể hiện card thời tiết, bước chân, calories và hàng quick action.}
+
+\subsection{Lấy thời tiết theo vị trí}
+\texttt{DashboardViewModel} dùng \texttt{FusedLocationProviderClient} để lấy vị trí cuối hoặc yêu cầu vị trí mới nếu cần. Sau đó dữ liệu được gửi tới \texttt{WeatherRepositoryImpl}, nơi Retrofit gọi API:
+\begin{itemize}
+  \item endpoint \texttt{/data/2.5/weather};
+  \item tham số \texttt{lat}, \texttt{lon}, \texttt{appid}, \texttt{units=metric}, \texttt{lang=vi};
+  \item kết quả được ánh xạ sang model \texttt{WeatherInfo}.
+\end{itemize}
+
+Phần gợi ý vận động theo thời tiết được cài bằng luật if/else đơn giản trong repository, ví dụ trời nóng thì khuyên tập trong nhà hoặc tập sáng sớm, trời mát thì khuyến khích vận động ngoài trời.
+
+\section{Hiện thực theo dõi bước chân}
+\texttt{StepTrackerViewModel} nhận dữ liệu từ \texttt{StepSensorManager} và lưu kết quả vào Room thông qua \texttt{StepRepositoryImpl}. Cách hiện thực hiện tại lấy giá trị cảm biến tích lũy kể từ khi sensor được đăng ký, sau đó trừ đi mốc ban đầu để suy ra số bước trong ngày của phiên hiện tại.
+
+\begin{lstlisting}[language=Kotlin,caption={Công thức tính calories và quãng đường từ số bước},label={lst:step-formula}]
+val calories = steps * 0.04 * (weightKg / 70.0)
+val distance = steps * 0.000762
+\end{lstlisting}
+
+\placeholderfigure{Placeholder màn hình theo dõi bước chân}{fig:ui-steps}{Chèn ảnh StepTrackerScreen với progress tròn, thống kê và biểu đồ tuần.}
+
+\section{Hiện thực quét thực phẩm bằng camera và AI}
+Đây là module thể hiện rõ nhất tính đa phương thức của hệ thống. Luồng xử lý được triển khai như sau:
+\begin{enumerate}
+  \item người dùng mở camera bằng CameraX;
+  \item hệ thống chụp ảnh và lấy bytes;
+  \item ảnh được giảm kích thước để tránh tràn bộ nhớ;
+  \item \texttt{FoodRepositoryImpl} gửi ảnh và prompt cho Gemini;
+  \item AI trả về JSON gồm tên món, calories, protein, carbs và fat;
+  \item người dùng xác nhận hoặc hủy trước khi lưu vào Room.
+\end{enumerate}
+
+\begin{lstlisting}[language=Kotlin,caption={Trích đoạn prompt nhận diện thực phẩm trong repository},label={lst:food-prompt}]
+Analyze this food image. Respond in exactly this JSON format:
+{"name":"food name in Vietnamese","calories":123,
+ "protein":10.0,"carbs":20.0,"fat":5.0}
+Estimate nutrition per serving. Be accurate for Vietnamese cuisine.
+\end{lstlisting}
+
+\placeholderfigure{Placeholder màn hình quản lý thực phẩm và quét món ăn}{fig:ui-food}{Chèn ảnh FoodScannerScreen, camera capture và card xác nhận kết quả AI.}
+
+\subsection{Ý nghĩa của module}
+Module này chứng minh ứng dụng không chỉ dùng AI sinh văn bản mà còn tận dụng được khả năng hiểu ảnh. Đây là điểm có giá trị cao đối với một đồ án tích hợp, bởi nó mở rộng phạm vi ứng dụng AI sang bài toán nhận diện đầu vào từ thế giới thực.
+
+\section{Hiện thực thư viện bài tập}
+\texttt{ExerciseRepositoryImpl} tự seed dữ liệu nếu bảng bài tập đang rỗng. Nguồn dữ liệu mẫu bao gồm khoảng 20 bài tập chia theo các nhóm cơ: ngực, lưng, chân, tay, vai, core và cardio. Mỗi bài tập gồm mô tả, độ khó, thời lượng, calories tiêu hao và hướng dẫn nhiều bước.
+
+\placeholderfigure{Placeholder màn hình thư viện bài tập}{fig:ui-exercise}{Chèn ảnh ExerciseLibraryScreen và bottom sheet chi tiết bài tập.}
+
+\subsection{Ưu điểm của cách tiếp cận}
+Việc seed sẵn dữ liệu cục bộ giúp ứng dụng hoạt động ngay cả khi không có kết nối mạng. Đồng thời, cách tách riêng repository bài tập cũng tạo điều kiện mở rộng sang dữ liệu từ API hoặc dữ liệu do người dùng tự tạo trong tương lai.
+
+\section{Hiện thực hồ sơ người dùng và cá nhân hóa}
+Module hồ sơ tại \texttt{ProfileScreen.kt} cho phép nhập tên, tuổi, giới tính, chiều cao, cân nặng, mức hoạt động, mục tiêu và số bước mong muốn mỗi ngày. Khi người dùng thay đổi dữ liệu, \texttt{ProfileViewModel} tính lại BMI, BMR và TDEE theo thời gian thực trước khi lưu.
+
+\placeholderfigure{Placeholder màn hình hồ sơ cá nhân}{fig:ui-profile}{Chèn ảnh ProfileScreen thể hiện form nhập liệu và card các chỉ số sức khỏe.}
+
+\subsection{Vai trò trong toàn hệ thống}
+Hồ sơ cá nhân là hạt nhân của nhiều tính năng AI về sức khỏe. Dữ liệu này được tái sử dụng ở các luồng:
+\begin{itemize}
+  \item tính mục tiêu calories hằng ngày;
+  \item chuẩn hóa calories tiêu hao theo trọng lượng cơ thể;
+  \item sinh thực đơn AI;
+  \item sinh lịch tập AI;
+  \item sinh lịch trình sinh hoạt AI;
+  \item tư vấn sức khỏe dựa trên dữ liệu cá nhân.
+\end{itemize}
+
+\section{Hiện thực AI sức khỏe và lịch trình}
+\subsection{AI tư vấn sức khỏe}
+\texttt{HealthChatViewModel} kết hợp bốn nguồn dữ liệu:
+\begin{itemize}
+  \item hồ sơ người dùng;
+  \item số bước hôm nay;
+  \item lượng calories đã nạp;
+  \item câu hỏi hiện tại của người dùng.
+\end{itemize}
+
+Sau đó, viewmodel gọi \texttt{HealthAiRepository.getHealthAdvice()} để nhận phản hồi AI theo luồng streaming.
+
+\placeholderfigure{Placeholder màn hình AI sức khỏe}{fig:ui-healthchat}{Chèn ảnh HealthChatScreen, vùng chat và hai nút gợi ý nhanh.}
+
+\subsection{Sinh thực đơn và lịch tập}
+Từ source code có thể thấy AI được dùng để tạo:
+\begin{itemize}
+  \item thực đơn một ngày bằng tiếng Việt với 3 bữa chính và 2 bữa phụ;
+  \item lịch tập một ngày gồm khởi động, bài tập chính, giãn cơ và calories ước tính.
+\end{itemize}
+Hai kết quả này được hiển thị dưới dạng modal bottom sheet, phù hợp với trải nghiệm tra cứu nhanh mà không cần rời khỏi màn hình chat.
+
+\subsection{Lịch trình sinh hoạt}
+Module lịch trình gồm hai hướng dữ liệu:
+\begin{itemize}
+  \item người dùng tự thêm các mục lịch thủ công;
+  \item AI sinh danh sách gợi ý dạng JSON, sau đó ánh xạ sang \texttt{ScheduleEntry}.
+\end{itemize}
+
+\placeholderfigure{Placeholder màn hình lịch trình}{fig:ui-schedule}{Chèn ảnh ScheduleScreen và phần bottom sheet lịch trình AI gợi ý.}
+
+\subsection{Nhận xét về mức độ hoàn thiện}
+Mặc dù model \texttt{ScheduleEntry} có trường \texttt{isReminderEnabled}, manifest đã khai báo quyền \texttt{SCHEDULE\_EXACT\_ALARM}, đồng thời đã có \texttt{ReminderReceiver} và \texttt{BootReceiver}, snapshot hiện tại vẫn chưa có logic đặt lịch bằng \texttt{AlarmManager}. Vì vậy, có thể kết luận phần nhắc lịch mới dừng ở mức chuẩn bị kiến trúc chứ chưa hoàn thiện thành chức năng hoạt động từ đầu đến cuối.
+
+\section{Hiện thực tiện ích thư giãn}
+\subsection{Bài tập thở 4--7--8}
+Màn hình \texttt{BreathingScreen.kt} mô phỏng đúng chu trình thở 4--7--8 với ba pha: hít vào 4 giây, giữ 7 giây và thở ra 8 giây. Vòng tròn hoạt ảnh được phóng to khi hít vào và thu nhỏ khi thở ra, tạo hiệu ứng trực quan dễ làm theo.
+
+\placeholderfigure{Placeholder màn hình bài tập thở}{fig:ui-breathing}{Chèn ảnh BreathingScreen và trạng thái đang chạy chu kỳ hít thở.}
+
+\subsection{Nhạc lofi}
+\texttt{LofiPlaybackService} được triển khai như một foreground service dùng \texttt{MediaPlayer} để stream các kênh nhạc lofi từ URL. Service này đồng thời phát notification để người dùng kiểm soát phát/dừng khi ứng dụng ở nền.
+
+\placeholderfigure{Placeholder màn hình lofi và notification phát nhạc}{fig:ui-lofi}{Chèn ảnh LofiScreen và, nếu cần, ảnh notification foreground service.}
+
+\subsection{Mini game giảm căng thẳng}
+\texttt{GamesScreen.kt} cung cấp ba trò chơi đơn giản:
+\begin{itemize}
+  \item Bubble Pop;
+  \item Color Tap;
+  \item Zen Memory.
+\end{itemize}
+Nhóm tính năng này mang ý nghĩa bổ trợ trải nghiệm, giúp ứng dụng không chỉ đóng vai trò theo dõi mà còn trực tiếp tạo khoảng nghỉ ngắn cho người dùng.
+
+\placeholderfigure{Placeholder màn hình mini game}{fig:ui-games}{Chèn ảnh menu mini game và một hoặc hai game con đang hoạt động.}
+
+\section{Hiện thực cài đặt và đồng bộ}
+Màn hình \texttt{SettingsScreen.kt} tập trung các thiết lập toàn cục như dark mode, reminders, cloud sync, logout, xóa dữ liệu, phần about và hotline khủng hoảng. Với người dùng đã đăng nhập, hệ thống cho phép đồng bộ dữ liệu mood, journal và quest lên Firestore thông qua \texttt{SyncRepository}.
+
+\placeholderfigure{Placeholder màn hình cài đặt}{fig:ui-settings}{Chèn ảnh SettingsScreen với các mục toggle, cloud sync và privacy note.}
+
+\subsection{Một số quan sát từ mã nguồn}
+\begin{itemize}
+  \item trạng thái dark mode và reminders được lưu bằng \texttt{SharedPreferences}, dù project đã khai báo dependency DataStore;
+  \item phần ``Privacy'' trong settings mô tả khá rõ dữ liệu được đồng bộ lên Firebase và xử lý qua Gemini API;
+  \item ở build debug, màn hình settings còn có mục admin để đọc danh sách user từ Firestore.
+\end{itemize}
+
+\chapter{Đánh giá và thảo luận}
+
+\section{Kết quả đạt được}
+Xét trên phương diện đồ án tích hợp, \appname\ đã đạt được nhiều kết quả đáng ghi nhận:
+\begin{itemize}
+  \item xây dựng được một ứng dụng Android đa chức năng với số lượng màn hình và luồng nghiệp vụ phong phú;
+  \item khai thác tốt Compose cho giao diện hiện đại và giàu hiệu ứng;
+  \item áp dụng thành công mô hình phân tầng với repository và use case;
+  \item kết nối được nhiều khả năng của thiết bị di động như camera, cảm biến, vị trí, âm thanh nền;
+  \item đưa AI vào nhiều bài toán thực tế thay vì chỉ dừng ở chatbot đơn giản.
+\end{itemize}
+
+\section{Ưu điểm của hệ thống}
+\subsection{Ưu điểm về kiến trúc}
+\begin{itemize}
+  \item phân tách module rõ ràng;
+  \item use case giúp gom logic nghiệp vụ dùng chung;
+  \item Hilt giảm mã khởi tạo thủ công;
+  \item Room tạo nền tảng offline tương đối tốt.
+\end{itemize}
+
+\subsection{Ưu điểm về trải nghiệm}
+\begin{itemize}
+  \item giao diện đồng nhất, màu sắc dịu và dễ tiếp cận;
+  \item trang chủ và dashboard giúp người dùng thấy ngay thông tin quan trọng;
+  \item các card, bottom sheet, progress indicator và animation được dùng hợp lý;
+  \item ứng dụng không quá nghiêng về một chiều mà dung hòa giữa tinh thần, vận động, dinh dưỡng và thư giãn.
+\end{itemize}
+
+\subsection{Ưu điểm về khai thác AI}
+\begin{itemize}
+  \item AI được dùng cả cho văn bản và hình ảnh;
+  \item prompt chat có cơ chế an toàn cơ bản;
+  \item quest, affirmation, insight, reflection, meal plan, workout plan và schedule đều là các ứng dụng AI có tính cá nhân hóa.
+\end{itemize}
+
+\section{Các hạn chế hiện tại của snapshot mã nguồn}
+Việc đọc kỹ source code cho thấy hệ thống vẫn còn một số điểm chưa hoàn thiện:
+\begin{enumerate}
+  \item \textbf{Nhắc lịch chưa end-to-end.} Receiver và permission đã có, nhưng thiếu khối logic đặt alarm và khôi phục alarm sau khi khởi động lại máy.
+  \item \textbf{Speech-to-text cho journal chưa nối vào UI.} Helper và contract đã tồn tại nhưng màn hình nhật ký chưa cung cấp nút ghi âm thực sự.
+  \item \textbf{Đồng bộ cloud còn cục bộ.} \texttt{SyncRepositoryImpl} hiện chỉ xử lý mood, journal và quest; các module sức khỏe chưa được đồng bộ.
+  \item \textbf{Thiếu kiểm thử tự động.} Trong snapshot hiện tại chưa có test case dưới \texttt{app/src/test} hay \texttt{app/src/androidTest}.
+  \item \textbf{Một số dependency chưa khai thác.} DataStore và WorkManager đã được khai báo nhưng chưa được dùng trực tiếp trong mã nghiệp vụ hiện tại.
+  \item \textbf{Quản trị cấu hình còn có chỗ chưa đồng nhất.} \texttt{local.properties.example} chứa các biến Supabase, trong khi build hiện tại thực tế dùng Gemini và Weather API key.
+\end{enumerate}
+
+\section{Bộ kiểm thử thủ công đề xuất}
+Do snapshot chưa có kiểm thử tự động, báo cáo đề xuất bộ kiểm thử thủ công cơ bản như Bảng~\ref{tab:manual-tests}.
+
+\begin{longtable}{>{\bfseries}p{1.7cm}p{4.1cm}X}
+\caption{Một số kịch bản kiểm thử thủ công đề xuất}\label{tab:manual-tests}\\
+\toprule
+Mã & Kịch bản & Kỳ vọng \\
+\midrule
+\endfirsthead
+\toprule
+Mã & Kịch bản & Kỳ vọng \\
+\midrule
+\endhead
+T01 & Đăng ký tài khoản mới & Hệ thống tạo tài khoản, gửi email xác minh, hiển thị thông báo thành công. \\
+T02 & Đăng nhập bằng display name đã xác minh & Người dùng vào được ứng dụng và dữ liệu cloud được tải xuống local. \\
+T03 & Lưu mood mới & Bản ghi tâm trạng xuất hiện trong Room và trang chủ hiển thị mood hôm nay. \\
+T04 & Lưu journal mới & Entry mới xuất hiện trong danh sách journal và card AI Reflection được cập nhật. \\
+T05 & Gửi tin nhắn chat & AI trả về phản hồi dạng streaming, sau khi hoàn tất thì lưu vào lịch sử chat. \\
+T06 & Sinh quest hằng ngày & Hệ thống sinh đúng 3 quest và lưu vào bảng quests. \\
+T07 & Chụp ảnh món ăn & Camera mở được, ảnh được phân tích, trả về card xác nhận món ăn. \\
+T08 & Cấp quyền activity recognition & Màn hình Step Tracker hiển thị số bước, calories và quãng đường. \\
+T09 & Tạo lịch trình AI & Bottom sheet hiện danh sách mục lịch theo dạng giờ-phút-tiêu đề-mô tả. \\
+T10 & Bật dark mode & Giao diện đổi sang palette tối và giữ được trạng thái sau khi mở lại app. \\
+\bottomrule
+\end{longtable}
+
+\section{Hướng phát triển tiếp theo}
+Dựa trên trạng thái hiện tại của hệ thống, các hướng phát triển hợp lý gồm:
+\begin{itemize}
+  \item hoàn thiện cơ chế nhắc lịch bằng \texttt{AlarmManager} hoặc WorkManager;
+  \item bổ sung kiểm thử unit test cho use case và repository, kiểm thử UI cho các luồng quan trọng;
+  \item đồng bộ thêm dữ liệu sức khỏe lên Firestore và xử lý conflict khi nhiều thiết bị cùng cập nhật;
+  \item bổ sung tính năng nhập nhật ký bằng giọng nói ở giao diện;
+  \item cho phép người dùng chỉnh sửa kết quả nhận diện món ăn trước khi lưu;
+  \item tối ưu bảo mật khóa API và chiến lược xử lý dữ liệu nhạy cảm;
+  \item bổ sung phân tích dữ liệu dài hạn, biểu đồ chi tiết hơn và dashboard cá nhân hóa sâu hơn.
+\end{itemize}
+
+\chapter{Kết luận}
+Qua quá trình khảo sát và phân tích mã nguồn, có thể khẳng định \appname\ là một đồ án có phạm vi tương đối rộng, kết hợp nhiều công nghệ hiện đại của Android và nhiều ý tưởng ứng dụng AI trong một sản phẩm duy nhất. Hệ thống không chỉ phục vụ nhu cầu ghi nhận tâm trạng và viết nhật ký mà còn mở rộng sang bước chân, thực phẩm, bài tập, hồ sơ, tư vấn và lịch trình sức khỏe. Việc tổ chức mã nguồn theo hướng phân tầng với repository, use case và viewmodel là điểm cộng lớn giúp đồ án có tính học thuật lẫn giá trị thực tiễn.
+
+Mặc dù vẫn còn các phần cần hoàn thiện như nhắc lịch, kiểm thử tự động và đồng bộ toàn diện hơn, snapshot hiện tại đã thể hiện rõ hướng phát triển của sản phẩm. Với việc tiếp tục đầu tư vào kiểm thử, tối ưu bảo mật, hoàn chỉnh luồng nhắc việc và mở rộng hệ thống phân tích dữ liệu, \appname\ có thể tiến gần hơn tới một ứng dụng chăm sóc sức khỏe số có tính ứng dụng thực tế cao.
+
+\appendix
+
+\chapter{Hướng dẫn chạy project}
+
+\section{Chuẩn bị môi trường}
+Để chạy project thực tế, cần chuẩn bị:
+\begin{itemize}
+  \item Android Studio phiên bản tương thích với Kotlin 2.1.21 và AGP 9.1.0;
+  \item Android SDK tương ứng với \texttt{compileSdk 35};
+  \item tệp \texttt{google-services.json} của Firebase project;
+  \item tệp \texttt{local.properties} chứa tối thiểu hai khóa \texttt{GEMINI\_API\_KEY} và \texttt{WEATHER\_API\_KEY}.
+\end{itemize}
+
+\begin{lstlisting}[caption={Ví dụ tối thiểu cho local.properties},label={lst:local-properties}]
+sdk.dir=/path/to/android/sdk
+GEMINI_API_KEY=your-gemini-key
+WEATHER_API_KEY=your-openweather-key
+\end{lstlisting}
+
+\begin{reportnote}
+Lưu ý rằng file \texttt{local.properties.example} trong repository hiện vẫn còn các biến mẫu liên quan đến Supabase. Tuy nhiên, theo \texttt{app/build.gradle.kts}, snapshot này sử dụng trực tiếp khóa Gemini và thời tiết. Khi mô tả phần cài đặt trong báo cáo chính thức, cần nêu rõ điều này để tránh nhầm lẫn.
+\end{reportnote}
+
+\section{Các bước chạy ứng dụng}
+\begin{enumerate}
+  \item Mở thư mục \texttt{zenbuddy-app} bằng Android Studio.
+  \item Đồng bộ Gradle.
+  \item Bổ sung \texttt{google-services.json} và \texttt{local.properties}.
+  \item Chọn thiết bị thật hoặc emulator phù hợp.
+  \item Chạy module \texttt{app}.
+\end{enumerate}
+
+\chapter{Danh mục ảnh cần chụp để hoàn thiện báo cáo}
+Để biến báo cáo này thành bản nộp hoàn chỉnh, nên thay placeholder bằng ảnh chụp thật theo danh sách sau:
+\begin{itemize}
+  \item màn hình đăng nhập/đăng ký;
+  \item onboarding;
+  \item trang chủ;
+  \item màn hình mood;
+  \item màn hình journal;
+  \item màn hình chat;
+  \item dashboard sức khỏe;
+  \item step tracker;
+  \item food scanner;
+  \item exercise library;
+  \item profile;
+  \item health chat;
+  \item schedule;
+  \item settings;
+  \item sơ đồ kiến trúc và sơ đồ cơ sở dữ liệu.
+\end{itemize}
+
+\printbibliography[title={Tài liệu tham khảo}]
+
+\end{document}
