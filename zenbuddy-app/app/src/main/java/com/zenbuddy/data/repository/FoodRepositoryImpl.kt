@@ -31,13 +31,18 @@ class FoodRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : FoodRepository {
 
+    companion object {
+        private const val FOOD_MODEL_NAME = "gemini-2.5-flash-lite"
+        private const val MAX_IMAGE_SIDE_PX = 512
+    }
+
     private val visionModel by lazy {
         GenerativeModel(
-            modelName = "gemini-2.5-flash",
+            modelName = FOOD_MODEL_NAME,
             apiKey = geminiApiKey,
             generationConfig = generationConfig {
                 temperature = 0.3f
-                maxOutputTokens = 512
+                maxOutputTokens = 256
             }
         )
     }
@@ -77,9 +82,10 @@ class FoodRepositoryImpl @Inject constructor(
         emit(Result.Loading)
         ensureGeminiConfigured()
 
-        // Downsample large images to avoid OOM and speed up Gemini processing
-        val bitmap = decodeSampledBitmap(imageBytes, 1024, 1024)
+        val bitmap = decodeSampledBitmap(imageBytes, MAX_IMAGE_SIDE_PX, MAX_IMAGE_SIDE_PX)
             ?: throw Exception("Không thể đọc hình ảnh. Hãy thử chụp lại.")
+        val resizedBitmap = bitmap.scaleDownToMaxSide(MAX_IMAGE_SIDE_PX)
+        if (resizedBitmap !== bitmap) bitmap.recycle()
 
         val prompt = """
             Analyze this food image. Respond in exactly this JSON format (no markdown, no extra text):
@@ -90,7 +96,7 @@ class FoodRepositoryImpl @Inject constructor(
 
         val response = visionModel.generateContent(
             content {
-                image(bitmap)
+                image(resizedBitmap)
                 text(prompt)
             }
         )
@@ -145,6 +151,11 @@ class FoodRepositoryImpl @Inject constructor(
                 raw.contains("PERMISSION_DENIED", ignoreCase = true) ||
                 raw.contains("403", ignoreCase = true) ->
                 "Gemini API key chưa đúng hoặc chưa được cấu hình. Hãy kiểm tra GEMINI_API_KEY trong local.properties rồi build lại."
+            raw.contains("max_token", ignoreCase = true) ||
+                raw.contains("maximum token", ignoreCase = true) ||
+                raw.contains("TPM", ignoreCase = true) ||
+                raw.contains("quota", ignoreCase = true) ->
+                "Ảnh hoặc hạn mức Gemini vừa vượt giới hạn token. App đã nén ảnh mạnh hơn; hãy thử chụp lại ảnh rõ, gọn khung món ăn."
             raw.contains("no longer available", ignoreCase = true) ||
                 raw.contains("NOT_FOUND", ignoreCase = true) ||
                 raw.contains("404", ignoreCase = true) ->
@@ -174,6 +185,16 @@ class FoodRepositoryImpl @Inject constructor(
             }
         }
         return inSampleSize
+    }
+
+    private fun Bitmap.scaleDownToMaxSide(maxSide: Int): Bitmap {
+        val currentMaxSide = maxOf(width, height)
+        if (currentMaxSide <= maxSide) return this
+
+        val scale = maxSide.toFloat() / currentMaxSide.toFloat()
+        val targetWidth = (width * scale).toInt().coerceAtLeast(1)
+        val targetHeight = (height * scale).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
     }
 }
 
