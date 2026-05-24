@@ -8,8 +8,8 @@ interface WeatherApiService {
 
     @GET("v1/forecast")
     suspend fun getWeather(
-        @Query("lat") lat: Double,
-        @Query("lon") lon: Double,
+        @Query("latitude") lat: Double,
+        @Query("longitude") lon: Double,
         @Query("current") current: String = "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code",
         @Query("timezone") timezone: String = "auto"
     ): WeatherResponse
