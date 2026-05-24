@@ -3,18 +3,12 @@ package com.zenbuddy.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 data class WeatherResponse(
-    val main: MainData,
-    val weather: List<WeatherData>,
-    val name: String
+    val current: CurrentWeatherData
 )
 
-data class MainData(
-    val temp: Double,
-    @SerializedName("feels_like") val feelsLike: Double,
-    val humidity: Int
-)
-
-data class WeatherData(
-    val description: String,
-    val icon: String
+data class CurrentWeatherData(
+    @SerializedName("temperature_2m") val temperature: Double,
+    @SerializedName("apparent_temperature") val feelsLike: Double,
+    @SerializedName("relative_humidity_2m") val humidity: Int,
+    @SerializedName("weather_code") val weatherCode: Int
 )

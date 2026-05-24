@@ -21,7 +21,7 @@ object NetworkModule {
     @Singleton
     fun provideWeatherApiService(): WeatherApiService {
         return Retrofit.Builder()
-            .baseUrl("https://api.openweathermap.org/")
+            .baseUrl("https://api.open-meteo.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(WeatherApiService::class.java)

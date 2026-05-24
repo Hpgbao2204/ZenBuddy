@@ -6,12 +6,11 @@ import retrofit2.http.Query
 
 interface WeatherApiService {
 
-    @GET("data/2.5/weather")
+    @GET("v1/forecast")
     suspend fun getWeather(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("appid") apiKey: String,
-        @Query("units") units: String = "metric",
-        @Query("lang") lang: String = "vi"
+        @Query("current") current: String = "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code",
+        @Query("timezone") timezone: String = "auto"
     ): WeatherResponse
 }

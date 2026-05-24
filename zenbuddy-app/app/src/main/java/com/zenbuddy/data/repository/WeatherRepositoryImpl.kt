@@ -1,6 +1,5 @@
 package com.zenbuddy.data.repository
 
-import com.zenbuddy.app.BuildConfig
 import com.zenbuddy.core.di.IoDispatcher
 import com.zenbuddy.core.error.AppError
 import com.zenbuddy.core.result.Result
@@ -19,16 +18,17 @@ class WeatherRepositoryImpl @Inject constructor(
     override suspend fun getWeather(lat: Double, lon: Double): Result<WeatherInfo> =
         withContext(ioDispatcher) {
             runCatching {
-                val response = weatherApi.getWeather(lat, lon, BuildConfig.WEATHER_API_KEY)
-                val weather = response.weather.firstOrNull()
+                val response = weatherApi.getWeather(lat, lon)
+                val current = response.current
+                val description = describeWeather(current.weatherCode)
                 WeatherInfo(
-                    temperature = response.main.temp,
-                    feelsLike = response.main.feelsLike,
-                    humidity = response.main.humidity,
-                    description = weather?.description ?: "",
-                    icon = weather?.icon ?: "",
-                    city = response.name,
-                    suggestion = generateSuggestion(response.main.temp, weather?.description ?: "")
+                    temperature = current.temperature,
+                    feelsLike = current.feelsLike,
+                    humidity = current.humidity,
+                    description = description,
+                    icon = "",
+                    city = "Vị trí hiện tại",
+                    suggestion = generateSuggestion(current.temperature, description)
                 )
             }.fold(
                 onSuccess = { Result.Success(it) },
@@ -46,5 +46,18 @@ class WeatherRepositoryImpl @Inject constructor(
             description.contains("mưa", ignoreCase = true) -> "Trời mưa, hãy tập trong nhà hôm nay."
             else -> "Hãy vận động ít nhất 30 phút hôm nay!"
         }
+    }
+
+    private fun describeWeather(code: Int): String = when (code) {
+        0 -> "trời quang"
+        1, 2, 3 -> "có mây"
+        45, 48 -> "sương mù"
+        51, 53, 55, 56, 57 -> "mưa phùn"
+        61, 63, 65, 66, 67 -> "mưa"
+        71, 73, 75, 77 -> "tuyết"
+        80, 81, 82 -> "mưa rào"
+        85, 86 -> "mưa tuyết"
+        95, 96, 99 -> "giông"
+        else -> "thời tiết hiện tại"
     }
 }
