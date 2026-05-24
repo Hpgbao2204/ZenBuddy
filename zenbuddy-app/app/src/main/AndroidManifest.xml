@@ -15,8 +15,11 @@
     <application
         android:name="com.zenbuddy.app.ZenBuddyApp"
         android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
         android:label="ZenBuddy"
-        android:supportsRtl="true">
+        android:roundIcon="@drawable/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ZenBuddy">
 
         <activity
             android:name="com.zenbuddy.app.MainActivity"
