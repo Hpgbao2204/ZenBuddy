@@ -31,14 +31,19 @@ class FoodRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : FoodRepository {
 
-    private val visionModel = GenerativeModel(
-        modelName = "gemini-2.0-flash",
-        apiKey = BuildConfig.GEMINI_API_KEY,
-        generationConfig = generationConfig {
-            temperature = 0.3f
-            maxOutputTokens = 512
-        }
-    )
+    private val visionModel by lazy {
+        GenerativeModel(
+            modelName = "gemini-2.0-flash",
+            apiKey = geminiApiKey,
+            generationConfig = generationConfig {
+                temperature = 0.3f
+                maxOutputTokens = 512
+            }
+        )
+    }
+
+    private val geminiApiKey: String
+        get() = BuildConfig.GEMINI_API_KEY.trim()
 
     override fun getFoodByDate(date: String): Flow<Result<List<FoodEntry>>> =
         foodDao.getFoodByDate(date)
@@ -70,6 +75,7 @@ class FoodRepositoryImpl @Inject constructor(
 
     override fun analyzeFoodImage(imageBytes: ByteArray): Flow<Result<FoodEntry>> = flow {
         emit(Result.Loading)
+        ensureGeminiConfigured()
 
         // Downsample large images to avoid OOM and speed up Gemini processing
         val bitmap = decodeSampledBitmap(imageBytes, 1024, 1024)
@@ -123,8 +129,26 @@ class FoodRepositoryImpl @Inject constructor(
             )
         )
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "Phân tích thất bại. Hãy thử lại.")))
+        emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e))))
     }.flowOn(ioDispatcher)
+
+    private fun ensureGeminiConfigured() {
+        if (geminiApiKey.isBlank() || geminiApiKey == "your-gemini-key") {
+            throw Exception("Chưa cấu hình GEMINI_API_KEY. Thêm key vào zenbuddy-app/local.properties rồi Sync/Rebuild lại app.")
+        }
+    }
+
+    private fun toFriendlyGeminiMessage(error: Throwable): String {
+        val raw = error.message.orEmpty()
+        return when {
+            raw.contains("API key", ignoreCase = true) ||
+                raw.contains("PERMISSION_DENIED", ignoreCase = true) ||
+                raw.contains("403", ignoreCase = true) ->
+                "Gemini API key chưa đúng hoặc chưa được cấu hình. Hãy kiểm tra GEMINI_API_KEY trong local.properties rồi build lại."
+            raw.isNotBlank() -> raw
+            else -> "Phân tích thất bại. Hãy thử lại."
+        }
+    }
 
     private fun decodeSampledBitmap(bytes: ByteArray, reqWidth: Int, reqHeight: Int): Bitmap? {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }

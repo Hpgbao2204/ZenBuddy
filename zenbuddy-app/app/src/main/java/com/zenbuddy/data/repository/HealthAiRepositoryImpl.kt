@@ -22,15 +22,20 @@ class HealthAiRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : HealthAiRepository {
 
-    private val model = GenerativeModel(
-        modelName = "gemini-2.0-flash",
-        apiKey = BuildConfig.GEMINI_API_KEY,
-        generationConfig = generationConfig {
-            temperature = 0.7f
-            topP = 0.9f
-            maxOutputTokens = 1024
-        }
-    )
+    private val model by lazy {
+        GenerativeModel(
+            modelName = "gemini-2.0-flash",
+            apiKey = geminiApiKey,
+            generationConfig = generationConfig {
+                temperature = 0.7f
+                topP = 0.9f
+                maxOutputTokens = 1024
+            }
+        )
+    }
+
+    private val geminiApiKey: String
+        get() = BuildConfig.GEMINI_API_KEY.trim()
 
     override fun generateMealPlan(
         tdee: Double,
@@ -38,6 +43,7 @@ class HealthAiRepositoryImpl @Inject constructor(
         preferences: String
     ): Flow<Result<String>> = flow {
         emit(Result.Loading)
+        ensureGeminiConfigured()
         val calorieTarget = when (goalType) {
             "lose" -> tdee - 500
             "gain" -> tdee + 300
@@ -64,7 +70,7 @@ class HealthAiRepositoryImpl @Inject constructor(
             emit(Result.Success(responseBuilder.toString()))
         }
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "AI meal plan failed")))
+        emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI meal plan failed"))))
     }.flowOn(ioDispatcher)
 
     override fun generateWorkoutPlan(
@@ -72,6 +78,7 @@ class HealthAiRepositoryImpl @Inject constructor(
         goalType: String
     ): Flow<Result<String>> = flow {
         emit(Result.Loading)
+        ensureGeminiConfigured()
         val prompt = """
             Bạn là huấn luyện viên cá nhân chuyên nghiệp. Tạo lịch tập 1 ngày bằng tiếng Việt.
             
@@ -94,7 +101,7 @@ class HealthAiRepositoryImpl @Inject constructor(
             emit(Result.Success(responseBuilder.toString()))
         }
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "AI workout plan failed")))
+        emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI workout plan failed"))))
     }.flowOn(ioDispatcher)
 
     override fun generateDailySchedule(
@@ -102,6 +109,7 @@ class HealthAiRepositoryImpl @Inject constructor(
         currentSchedule: List<ScheduleEntry>
     ): Flow<Result<List<ScheduleEntry>>> = flow {
         emit(Result.Loading)
+        ensureGeminiConfigured()
         val prompt = """
             Bạn là chuyên gia sức khỏe. Tạo lịch trình 1 ngày bằng tiếng Việt.
             
@@ -133,7 +141,7 @@ class HealthAiRepositoryImpl @Inject constructor(
         }
         emit(Result.Success(entries))
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "AI schedule failed")))
+        emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI schedule failed"))))
     }.flowOn(ioDispatcher)
 
     override fun getHealthAdvice(
@@ -143,6 +151,7 @@ class HealthAiRepositoryImpl @Inject constructor(
         todayCalories: Double
     ): Flow<Result<String>> = flow {
         emit(Result.Loading)
+        ensureGeminiConfigured()
         val prompt = """
             [HỆ THỐNG]
             Bạn là trợ lý sức khỏe AI thông minh, thân thiện. Trả lời bằng tiếng Việt.
@@ -168,8 +177,26 @@ class HealthAiRepositoryImpl @Inject constructor(
             emit(Result.Success(responseBuilder.toString()))
         }
     }.catch { e ->
-        emit(Result.Error(AppError.AiError(e.message ?: "AI advice failed")))
+        emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI advice failed"))))
     }.flowOn(ioDispatcher)
+
+    private fun ensureGeminiConfigured() {
+        if (geminiApiKey.isBlank() || geminiApiKey == "your-gemini-key") {
+            throw Exception("Chưa cấu hình GEMINI_API_KEY. Thêm key vào zenbuddy-app/local.properties rồi Sync/Rebuild lại app.")
+        }
+    }
+
+    private fun toFriendlyGeminiMessage(error: Throwable, fallback: String): String {
+        val raw = error.message.orEmpty()
+        return when {
+            raw.contains("API key", ignoreCase = true) ||
+                raw.contains("PERMISSION_DENIED", ignoreCase = true) ||
+                raw.contains("403", ignoreCase = true) ->
+                "Gemini API key chưa đúng hoặc chưa được cấu hình. Hãy kiểm tra GEMINI_API_KEY trong local.properties rồi build lại."
+            raw.isNotBlank() -> raw
+            else -> fallback
+        }
+    }
 }
 
 private data class ScheduleItemDto(
