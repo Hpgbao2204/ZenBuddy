@@ -54,6 +54,7 @@ captures/
 test-results/
 app/src/test/
 *.xml
+!app/src/main/AndroidManifest.xml
 
 # ── Lint ──────────────────────────────────────────────────────
 lint/

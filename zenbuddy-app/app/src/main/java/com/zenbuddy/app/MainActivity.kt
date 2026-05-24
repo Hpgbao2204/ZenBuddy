@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.auth.FirebaseAuth
 import com.zenbuddy.ui.navigation.Route
 import com.zenbuddy.ui.navigation.ZenNavGraph
 import com.zenbuddy.ui.theme.ThemeState
@@ -19,6 +18,7 @@ class MainActivity : ComponentActivity() {
         private const val PREFS_NAME = "zenbuddy_prefs"
         private const val KEY_ONBOARDING_DONE = "onboarding_done"
         private const val KEY_DARK_MODE = "dark_mode"
+        private const val KEY_CURRENT_USER_ID = "auth_current_user_id"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,9 +27,7 @@ class MainActivity : ComponentActivity() {
 
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val onboardingDone = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
-        val firebaseUser = FirebaseAuth.getInstance().currentUser
-        val isLoggedIn = firebaseUser != null &&
-            (BuildConfig.DEBUG || firebaseUser.isEmailVerified)
+        val isLoggedIn = prefs.getString(KEY_CURRENT_USER_ID, null) != null
 
         ThemeState.isDarkMode.value = prefs.getBoolean(KEY_DARK_MODE, false)
 

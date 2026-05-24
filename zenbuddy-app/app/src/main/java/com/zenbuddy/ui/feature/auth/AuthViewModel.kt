@@ -61,9 +61,8 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             authRepository.register(email, password, displayName)
-                .onSuccess {
-                    // Don't set user — require email verification first
-                    _state.update { it.copy(isLoading = false, verificationSent = true) }
+                .onSuccess { user ->
+                    _state.update { it.copy(isLoading = false, user = user, verificationSent = false) }
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Registration failed") }

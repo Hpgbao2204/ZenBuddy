@@ -320,7 +320,7 @@ fun AuthScreen(
                     )
                 ) {
                     Text(
-                        text = "✉️ Registration successful! A verification email has been sent. Please verify your email before logging in.",
+                        text = "Registration successful. You can use ZenBuddy now.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         textAlign = TextAlign.Center,
