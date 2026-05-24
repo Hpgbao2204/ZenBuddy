@@ -33,7 +33,7 @@ class FoodRepositoryImpl @Inject constructor(
 
     private val visionModel by lazy {
         GenerativeModel(
-            modelName = "gemini-2.0-flash",
+            modelName = "gemini-2.5-flash",
             apiKey = geminiApiKey,
             generationConfig = generationConfig {
                 temperature = 0.3f
@@ -145,6 +145,10 @@ class FoodRepositoryImpl @Inject constructor(
                 raw.contains("PERMISSION_DENIED", ignoreCase = true) ||
                 raw.contains("403", ignoreCase = true) ->
                 "Gemini API key chưa đúng hoặc chưa được cấu hình. Hãy kiểm tra GEMINI_API_KEY trong local.properties rồi build lại."
+            raw.contains("no longer available", ignoreCase = true) ||
+                raw.contains("NOT_FOUND", ignoreCase = true) ||
+                raw.contains("404", ignoreCase = true) ->
+                "Model Gemini cũ không còn khả dụng. Hãy cập nhật app lên bản mới nhất rồi thử lại."
             raw.isNotBlank() -> raw
             else -> "Phân tích thất bại. Hãy thử lại."
         }

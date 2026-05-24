@@ -22,4 +22,5 @@ sealed interface HealthChatUiEvent {
     data object GenerateMealPlan : HealthChatUiEvent
     data object GenerateWorkoutPlan : HealthChatUiEvent
     data object DismissPlan : HealthChatUiEvent
+    data object DismissError : HealthChatUiEvent
 }

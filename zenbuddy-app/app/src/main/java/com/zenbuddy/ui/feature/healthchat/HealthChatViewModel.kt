@@ -38,6 +38,7 @@ class HealthChatViewModel @Inject constructor(
             HealthChatUiEvent.GenerateMealPlan -> generateMealPlan()
             HealthChatUiEvent.GenerateWorkoutPlan -> generateWorkoutPlan()
             HealthChatUiEvent.DismissPlan -> _uiState.update { it.copy(mealPlan = null, workoutPlan = null) }
+            HealthChatUiEvent.DismissError -> _uiState.update { it.copy(error = null) }
         }
     }
 
@@ -50,7 +51,8 @@ class HealthChatViewModel @Inject constructor(
             it.copy(
                 messages = it.messages + userMessage,
                 currentInput = "",
-                isGenerating = true
+                isGenerating = true,
+                error = null
             )
         }
 
@@ -70,8 +72,15 @@ class HealthChatViewModel @Inject constructor(
                         }
                         _uiState.update { it.copy(messages = messages, isGenerating = false) }
                     }
-                    is Result.Error -> _uiState.update {
-                        it.copy(error = result.error.message, isGenerating = false)
+                    is Result.Error -> _uiState.update { state ->
+                        state.copy(
+                            messages = state.messages + HealthChatMessage(
+                                text = result.error.message,
+                                isFromUser = false
+                            ),
+                            error = result.error.message,
+                            isGenerating = false
+                        )
                     }
                     Result.Loading -> {}
                 }
