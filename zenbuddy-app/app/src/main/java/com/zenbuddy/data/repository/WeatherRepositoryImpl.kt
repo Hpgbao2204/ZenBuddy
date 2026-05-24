@@ -27,7 +27,7 @@ class WeatherRepositoryImpl @Inject constructor(
                     humidity = current.humidity,
                     description = description,
                     icon = "",
-                    city = "Vị trí hiện tại",
+                    city = if (isHoChiMinhFallback(lat, lon)) "TP. Hồ Chí Minh" else "Vị trí hiện tại",
                     suggestion = generateSuggestion(current.temperature, description)
                 )
             }.fold(
@@ -59,5 +59,9 @@ class WeatherRepositoryImpl @Inject constructor(
         85, 86 -> "mưa tuyết"
         95, 96, 99 -> "giông"
         else -> "thời tiết hiện tại"
+    }
+
+    private fun isHoChiMinhFallback(lat: Double, lon: Double): Boolean {
+        return kotlin.math.abs(lat - 10.7769) < 0.001 && kotlin.math.abs(lon - 106.7009) < 0.001
     }
 }

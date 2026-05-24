@@ -41,6 +41,11 @@ class DashboardViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    companion object {
+        private const val FALLBACK_LAT = 10.7769
+        private const val FALLBACK_LON = 106.7009
+    }
+
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
@@ -119,7 +124,10 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
             val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            if (!hasFine && !hasCoarse) return@launch
+            if (!hasFine && !hasCoarse) {
+                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+                return@launch
+            }
 
             try {
                 locationClient.lastLocation.addOnSuccessListener { location ->
@@ -130,9 +138,11 @@ class DashboardViewModel @Inject constructor(
                         requestFreshLocation()
                     }
                 }.addOnFailureListener {
-                    requestFreshLocation()
+                    loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
                 }
-            } catch (_: SecurityException) { }
+            } catch (_: SecurityException) {
+                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+            }
         }
     }
 
@@ -146,15 +156,21 @@ class DashboardViewModel @Inject constructor(
                 request,
                 object : LocationCallback() {
                     override fun onLocationResult(result: LocationResult) {
-                        result.lastLocation?.let { loc ->
+                        val location = result.lastLocation
+                        if (location != null) {
+                            val loc = location
                             loadWeatherForLocation(loc.latitude, loc.longitude)
+                        } else {
+                            loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
                         }
                         locationClient.removeLocationUpdates(this)
                     }
                 },
                 Looper.getMainLooper()
             )
-        } catch (_: SecurityException) { }
+        } catch (_: SecurityException) {
+            loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+        }
     }
 
     private fun loadWeatherForLocation(lat: Double, lon: Double) {
@@ -162,6 +178,8 @@ class DashboardViewModel @Inject constructor(
             val result = weatherRepository.getWeather(lat, lon)
             if (result is Result.Success) {
                 _uiState.update { state -> state.copy(weather = result.data) }
+            } else if (result is Result.Error) {
+                _uiState.update { state -> state.copy(error = result.error.message) }
             }
         }
     }
