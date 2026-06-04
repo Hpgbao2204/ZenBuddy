@@ -174,32 +174,59 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         val weather = uiState.weather
-                        if (weather != null) {
-                            Text(
-                                text = "${weather.temperature.toInt()}°C - ${weather.city}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = weather.description.replaceFirstChar { it.uppercase() },
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = weather.suggestion,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                            )
-                        } else {
-                            Text(
-                                text = "Thời tiết",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Đang tải dữ liệu thời tiết... Nhấn để thử lại",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                            )
+                        when {
+                            weather != null -> {
+                                Text(
+                                    text = "${weather.temperature.toInt()}°C - ${weather.city}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = weather.description.replaceFirstChar { it.uppercase() },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = weather.suggestion,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                            uiState.isWeatherLoading -> {
+                                Text(
+                                    text = "Thời tiết",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Đang tải dữ liệu thời tiết...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                            uiState.weatherError != null -> {
+                                Text(
+                                    text = "Thời tiết",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Không tải được thời tiết. Nhấn để thử lại",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = "Thời tiết",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Nhấn để tải dữ liệu thời tiết",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
                         }
                     }
                 }

@@ -41,8 +41,16 @@ class ChatRepositoryImpl @Inject constructor(
                     "Invalid API key. Please check your Gemini key in settings 🔑"
                 msg.contains("not found", ignoreCase = true) || msg.contains("404", ignoreCase = true) ->
                     "AI model not available. Please try again later 🔄"
+                msg.contains("MAX_TOKENS", ignoreCase = true) || msg.contains("max tokens", ignoreCase = true) ->
+                    "AI response was cut short. Please try again 💜"
                 else -> "AI error: ${msg.take(100)} 💜"
             }
+        }
+
+        private fun fallbackAffirmation(moodScore: Int): String = when {
+            moodScore <= 3 -> "Take one gentle breath. You are still here, and that is enough for this moment 💜"
+            moodScore <= 6 -> "You are allowed to move slowly today. Small steps still count 💜"
+            else -> "Let this good energy meet you fully. You deserve moments that feel light 💜"
         }
     }
 
@@ -64,7 +72,7 @@ class ChatRepositoryImpl @Inject constructor(
         generationConfig = generationConfig {
             temperature = 0.8f
             topP = 0.9f
-            maxOutputTokens = 256
+            maxOutputTokens = 512
         }
     )
 
@@ -142,12 +150,30 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun generateAffirmation(moodScore: Int, recentJournal: String): Result<String> =
         runCatching {
-            val prompt = "Generate one short positive affirmation (1-2 sentences) for someone with mood $moodScore/10. Be warm and encouraging. End with an emoji. No prefix."
+            val journalContext = recentJournal.take(180).takeIf { it.isNotBlank() }
+            val prompt = buildString {
+                append("Write exactly one short positive affirmation for someone with mood ")
+                append(moodScore)
+                append("/10. Use one sentence under 22 words. Be warm and encouraging. End with one emoji. No prefix.")
+                if (journalContext != null) {
+                    append(" Gentle context: \"")
+                    append(journalContext)
+                    append("\"")
+                }
+            }
             val response = shortModel.generateContent(prompt)
-            response.text?.trim() ?: "You are worthy of peace and joy 💜"
+            response.text?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?: fallbackAffirmation(moodScore)
         }.fold(
             onSuccess = { Result.Success(it) },
-            onFailure = { Result.Error(AppError.AiError(friendlyAiError(it))) }
+            onFailure = {
+                if (it.message?.contains("MAX_TOKENS", ignoreCase = true) == true) {
+                    Result.Success(fallbackAffirmation(moodScore))
+                } else {
+                    Result.Error(AppError.AiError(friendlyAiError(it)))
+                }
+            }
         )
 
     override suspend fun generateMoodInsight(moodScores: List<Int>, days: Int): Result<String> =

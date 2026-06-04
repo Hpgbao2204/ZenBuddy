@@ -141,7 +141,30 @@ class HealthChatViewModel @Inject constructor(
         val result = userProfileRepository.getProfile().first()
         return if (result is Result.Success) {
             val p = result.data
-            "${p.gender}, ${p.age} tuổi, ${p.weightKg}kg, ${p.heightCm}cm, mục tiêu: ${p.goalType}"
+            val goalLabel = when (p.goalType) {
+                "lose" -> "giảm cân"
+                "gain" -> "tăng cân/tăng cơ"
+                else -> "duy trì sức khỏe"
+            }
+            val activityLabel = when (p.activityLevel) {
+                "sedentary" -> "ít vận động"
+                "light" -> "vận động nhẹ"
+                "moderate" -> "vận động vừa"
+                "active" -> "vận động nhiều"
+                "very_active" -> "vận động rất nhiều"
+                else -> p.activityLevel
+            }
+            """
+                - Giới tính: ${p.gender}
+                - Tuổi: ${p.age}
+                - Chiều cao/cân nặng: ${p.heightCm.toInt()}cm, ${p.weightKg.toInt()}kg
+                - BMI: ${String.format("%.1f", p.calculateBMI())}
+                - BMR/TDEE ước tính: ${p.calculateBMR().toInt()} / ${p.calculateTDEE().toInt()} kcal
+                - Mục tiêu: $goalLabel
+                - Mức vận động: $activityLabel
+                - Mục tiêu bước/ngày: ${p.dailyStepGoal}
+                - Mục tiêu calories/ngày: ${p.dailyCalorieGoal.toInt()} kcal
+            """.trimIndent()
         } else "Chưa có hồ sơ"
     }
 

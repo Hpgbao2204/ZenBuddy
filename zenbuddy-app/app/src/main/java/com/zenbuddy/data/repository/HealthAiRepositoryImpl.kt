@@ -29,7 +29,7 @@ class HealthAiRepositoryImpl @Inject constructor(
             generationConfig = generationConfig {
                 temperature = 0.7f
                 topP = 0.9f
-                maxOutputTokens = 1024
+                maxOutputTokens = 2048
             }
         )
     }
@@ -63,12 +63,7 @@ class HealthAiRepositoryImpl @Inject constructor(
             Format đẹp, rõ ràng.
         """.trimIndent()
 
-        val responseBuilder = StringBuilder()
-        model.generateContentStream(prompt).collect { chunk ->
-            val token = chunk.text ?: return@collect
-            responseBuilder.append(token)
-            emit(Result.Success(responseBuilder.toString()))
-        }
+        emitStreamingText(prompt)
     }.catch { e ->
         emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI meal plan failed"))))
     }.flowOn(ioDispatcher)
@@ -94,12 +89,7 @@ class HealthAiRepositoryImpl @Inject constructor(
             Format đẹp, dùng emoji phù hợp.
         """.trimIndent()
 
-        val responseBuilder = StringBuilder()
-        model.generateContentStream(prompt).collect { chunk ->
-            val token = chunk.text ?: return@collect
-            responseBuilder.append(token)
-            emit(Result.Success(responseBuilder.toString()))
-        }
+        emitStreamingText(prompt)
     }.catch { e ->
         emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI workout plan failed"))))
     }.flowOn(ioDispatcher)
@@ -167,18 +157,35 @@ class HealthAiRepositoryImpl @Inject constructor(
             [CÂU HỎI]
             $question
             
-            Trả lời ngắn gọn, thực tế, dễ hiểu. Dùng emoji phù hợp.
+            [YÊU CẦU TRẢ LỜI]
+            - Dựa sát vào hồ sơ và dữ liệu hôm nay ở trên.
+            - Trả lời tối đa 5 ý ngắn, ưu tiên hành động cụ thể.
+            - Nếu nói về giảm/tăng cân, nhắc calories, bước chân, BMI/TDEE nếu có trong hồ sơ.
+            - Không chẩn đoán bệnh, khuyên hỏi chuyên gia khi có dấu hiệu bất thường.
+            - Dùng tiếng Việt, thân thiện, có emoji vừa phải.
         """.trimIndent()
 
-        val responseBuilder = StringBuilder()
-        model.generateContentStream(prompt).collect { chunk ->
-            val token = chunk.text ?: return@collect
-            responseBuilder.append(token)
-            emit(Result.Success(responseBuilder.toString()))
-        }
+        emitStreamingText(prompt)
     }.catch { e ->
         emit(Result.Error(AppError.AiError(toFriendlyGeminiMessage(e, "AI advice failed"))))
     }.flowOn(ioDispatcher)
+
+    private suspend fun kotlinx.coroutines.flow.FlowCollector<Result<String>>.emitStreamingText(prompt: String) {
+        val responseBuilder = StringBuilder()
+        try {
+            model.generateContentStream(prompt).collect { chunk ->
+                val token = chunk.text ?: return@collect
+                responseBuilder.append(token)
+                emit(Result.Success(responseBuilder.toString()))
+            }
+        } catch (e: Throwable) {
+            if (isMaxTokensError(e) && responseBuilder.isNotBlank()) {
+                emit(Result.Success(responseBuilder.toString().trim()))
+            } else {
+                throw e
+            }
+        }
+    }
 
     private fun ensureGeminiConfigured() {
         if (geminiApiKey.isBlank() || geminiApiKey == "your-gemini-key") {
@@ -197,9 +204,17 @@ class HealthAiRepositoryImpl @Inject constructor(
                 raw.contains("NOT_FOUND", ignoreCase = true) ||
                 raw.contains("404", ignoreCase = true) ->
                 "Model Gemini cũ không còn khả dụng. Hãy cập nhật app lên bản mới nhất rồi thử lại."
+            isMaxTokensError(error) ->
+                "Câu trả lời AI bị cắt do vượt giới hạn token. Hãy hỏi ngắn hơn hoặc thử lại."
             raw.isNotBlank() -> raw
             else -> fallback
         }
+    }
+
+    private fun isMaxTokensError(error: Throwable): Boolean {
+        val raw = error.message.orEmpty()
+        return raw.contains("MAX_TOKENS", ignoreCase = true) ||
+            raw.contains("max tokens", ignoreCase = true)
     }
 }
 

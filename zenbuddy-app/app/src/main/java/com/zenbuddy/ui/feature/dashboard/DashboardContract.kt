@@ -11,6 +11,8 @@ data class DashboardUiState(
     val stepGoal: Int = 10000,
     val calorieGoal: Double = 2000.0,
     val weather: WeatherInfo? = null,
+    val isWeatherLoading: Boolean = false,
+    val weatherError: String? = null,
     val userName: String = "",
     val isLoading: Boolean = true,
     val error: String? = null

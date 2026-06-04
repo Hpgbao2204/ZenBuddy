@@ -2,6 +2,7 @@ package com.zenbuddy.ui.feature.dashboard
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -122,10 +123,12 @@ class DashboardViewModel @Inject constructor(
 
     private fun fetchWeather() {
         viewModelScope.launch {
+            _uiState.update { it.copy(isWeatherLoading = true, weatherError = null) }
+
             val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
             val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
             if (!hasFine && !hasCoarse) {
-                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
                 return@launch
             }
 
@@ -134,14 +137,13 @@ class DashboardViewModel @Inject constructor(
                     if (location != null) {
                         loadWeatherForLocation(location.latitude, location.longitude)
                     } else {
-                        // lastLocation is null, request a fresh location
                         requestFreshLocation()
                     }
                 }.addOnFailureListener {
-                    loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+                    loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
                 }
             } catch (_: SecurityException) {
-                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+                loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
             }
         }
     }
@@ -152,35 +154,81 @@ class DashboardViewModel @Inject constructor(
             val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 5000L)
                 .setMaxUpdates(1)
                 .build()
+            val handler = Handler(Looper.getMainLooper())
+            var handled = false
+            lateinit var timeout: Runnable
+            val callback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    if (handled) return
+                    handled = true
+                    handler.removeCallbacks(timeout)
+
+                    val location = result.lastLocation
+                    if (location != null) {
+                        val loc = location
+                        loadWeatherForLocation(loc.latitude, loc.longitude)
+                    } else {
+                        loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
+                    }
+                    locationClient.removeLocationUpdates(this)
+                }
+            }
+
+            timeout = Runnable {
+                if (!handled) {
+                    handled = true
+                    locationClient.removeLocationUpdates(callback)
+                    loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
+                }
+            }
+
             locationClient.requestLocationUpdates(
                 request,
-                object : LocationCallback() {
-                    override fun onLocationResult(result: LocationResult) {
-                        val location = result.lastLocation
-                        if (location != null) {
-                            val loc = location
-                            loadWeatherForLocation(loc.latitude, loc.longitude)
-                        } else {
-                            loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
-                        }
-                        locationClient.removeLocationUpdates(this)
-                    }
-                },
+                callback,
                 Looper.getMainLooper()
             )
+            handler.postDelayed(timeout, 8000L)
         } catch (_: SecurityException) {
-            loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON)
+            loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
         }
     }
 
-    private fun loadWeatherForLocation(lat: Double, lon: Double) {
+    private fun loadWeatherForLocation(
+        lat: Double,
+        lon: Double,
+        allowFallback: Boolean = true
+    ) {
         viewModelScope.launch {
             val result = weatherRepository.getWeather(lat, lon)
-            if (result is Result.Success) {
-                _uiState.update { state -> state.copy(weather = result.data) }
-            } else if (result is Result.Error) {
-                _uiState.update { state -> state.copy(error = result.error.message) }
+            when (result) {
+                is Result.Success -> {
+                    _uiState.update { state ->
+                        state.copy(
+                            weather = result.data,
+                            isWeatherLoading = false,
+                            weatherError = null
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    if (allowFallback && !isHoChiMinhFallback(lat, lon)) {
+                        loadWeatherForLocation(FALLBACK_LAT, FALLBACK_LON, allowFallback = false)
+                    } else {
+                        _uiState.update { state ->
+                            state.copy(
+                                isWeatherLoading = false,
+                                weatherError = result.error.message,
+                                error = result.error.message
+                            )
+                        }
+                    }
+                }
+                Result.Loading -> Unit
             }
         }
+    }
+
+    private fun isHoChiMinhFallback(lat: Double, lon: Double): Boolean {
+        return kotlin.math.abs(lat - FALLBACK_LAT) < 0.001 && kotlin.math.abs(lon - FALLBACK_LON) < 0.001
     }
 }
